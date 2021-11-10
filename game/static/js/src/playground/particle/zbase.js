@@ -16,14 +16,14 @@ class Particle extends AcGameObject {
         //粒子的颜色应该和玩家的颜色相等
         this.color = player.color;
         // 粒子半径
-        this.radius = Math.random() * player.radius * 0.4;
+        this.radius = Math.random() * player.radius * gameParameters.particle_size_percent;
         // 释放速度
-        this.speed = player.speed * 20;
+        this.speed = player.speed * gameParameters.particle_speed_percent;
 
         // 固定参数，粒子的移动距离
-        this.move_length = Math.max(0.5, Math.random()) * player.radius * 4;
+        this.move_length = Math.max(gameParameters.particle_move_length[0], Math.random()) * player.radius * gameParameters.particle_move_length[1];
         // 减速摩擦力
-        this.friction = 0.85;
+        this.friction = gameParameters.particle_friction;
         // 误差范围
         this.eps = 1;
 
@@ -52,7 +52,7 @@ class Particle extends AcGameObject {
             return false;
         }
 
-        this.radius *= 0.98;
+        this.radius *= gameParameters.particle_feed;
         //每一帧都刷新粒子的位置
         let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
         this.x += this.vx * moved;

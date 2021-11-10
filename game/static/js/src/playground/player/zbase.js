@@ -35,9 +35,6 @@ class Player extends AcGameObject {
         this.eps = 0.1;
         this.friction = 0.9;
         this.spent_time = 0;
-        this.eps = 0.1;
-        this.friction = 0.9;
-        this.spent_time = 0;
 
         this.cur_skill = null;
 
@@ -64,14 +61,20 @@ class Player extends AcGameObject {
     update() {
         //实现电脑玩家的自动攻击
         this.spent_time += this.timedelta / 1000;
-        if (!this.is_me && Math.random() < 1 / 300.0) {
+
+        if (!this.is_me && Math.random() < gameParameters.AIs_attack_frequency) {
             let player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
+            //是否开启相互攻击
+            if (!gameParameters.attack_eachother) {
+                player = this.playground.players[0];
+            }
+            //实现简单的移动预测
             let tx = player.x + player.speed * this.vx * this.timedelta / 1000 * 0.3;
             let ty = player.y + player.speed * this.vy * this.timedelta / 1000 * 0.3;
             this.shoot_fireball(tx, ty);
         }
 
-        if (this.damage_speed > 10) {
+        if (this.damage_speed > gameParameters.damage_speed) {
             this.vx = this.vy = 0;
             this.move_length = 0;
             this.x += this.damage_x * this.damage_speed * this.timedelta / 1000;
@@ -160,14 +163,16 @@ class Player extends AcGameObject {
      */
     shoot_fireball(tx, ty) {
         let x = this.x, y = this.y;
-        let radius = this.playground.height * 0.01;
+        let radius = this.playground.height * gameParameters.fireball_size;
         let angle = Math.atan2(ty - this.y, tx - this.x);
         let vx = Math.cos(angle), vy = Math.sin(angle);
-        let speed = this.playground.height * 0.5;
-        let mone_length = this.playground.height * 1;
+        let speed = this.playground.height * gameParameters.fire_speed;
+        let mone_length = this.playground.height * gameParameters.fireball_range;
         //所有人必须在开局4秒后才能释放火球
-        if (this.spent_time > 4) {
-            new FireBall(this.playground, this, x, y, radius, vx, vy, speed, mone_length, this.playground.height * 0.01, "orange");
+        if (this.spent_time > gameParameters.calm_time) {
+            this.playground.fireballs.push(
+                new FireBall(this.playground, this, x, y, radius, vx, vy, speed, mone_length, this.playground.height * gameParameters.fireball_damage, gameParameters.fireball_color)
+            )
         }
     }
 
@@ -178,14 +183,14 @@ class Player extends AcGameObject {
      */
     is_attacked(angle, damage) {
         //实现被攻击后的粒子效果
-        for (let i = 0; i < 20 + Math.random() * 10; i++) {
+        for (let i = 0; i < gameParameters.particle_number[0] + Math.random() * gameParameters.particle_number[1]; i++) {
             //这里参考了大佬的代码，比y总的传参更合理
             new Particle(this.playground, this);
         }
         //受到攻击的玩家，移速变慢，体积变小,发射技能的弹道速度变慢
         this.radius -= damage;
-        this.speed *= 0.8;
-        if (this.radius < 10) {
+        this.speed *= gameParameters.reduce_ratio;
+        if (this.radius < gameParameters.dead_szie) {
             this.destroy();
             return false;
         }
@@ -219,6 +224,15 @@ class Player extends AcGameObject {
         this.vx = Math.cos(angle);
         this.vy = Math.sin(angle);
     }
+
+    on_destroy() {
+        for (let i = 0; i < this.playground.players.length; i++) {
+            if (this.playground.players[i] === this) {
+                this.playground.players.splice(i, 1);
+            }
+        }
+    }
+
 
 }
 

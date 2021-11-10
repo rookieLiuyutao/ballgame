@@ -20,7 +20,7 @@ class GameMap extends AcGameObject {
 
     render() {
         //改变背景的不透明度，以实现移动残影
-        this.ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+        this.ctx.fillStyle = gameParameters.background_color;
         //fillRect()绘制矩形的方法
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }

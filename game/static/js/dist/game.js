@@ -1,3 +1,91 @@
+var gameParameters = {
+
+//--------------playground/game_map/zbase.js----------------
+    //背景颜色和不透明度(rgba值)
+    "background_color": "rgba(0, 0, 0, 0.2)",
+//--------------------------------------------------------------
+
+
+//--------------playground/particle/zbase.js----------------
+
+    //粒子效果的最大粒子半径/玩家半径的比值
+    "particle_size_percent": 0.4,
+
+    //粒子速度/其玩家速度，的比值
+    "particle_speed_percent": 20,
+
+    //粒子移动距离参数Math.max(0.5, Math.random()) * player.radius * 4
+    "particle_move_length": [0.5, 4],
+
+    //减速摩擦力
+    "particle_friction": 0.85,
+
+    //粒子每帧的消失比例
+    "particle_feed": 0.98,
+
+//----------------------------------------------------------------------
+
+//--------------playground/player/zbase.js----------------
+
+    //电脑玩家自动攻击的频率
+    "AIs_attack_frequency": 1/360,
+
+    //最小击退速度
+    "damage_speed":10,
+
+    //是否开启互相攻击
+    "attack_eachother":false,
+
+    //火球大小/画布高度
+    "fireball_size":0.01,
+
+    //火球弹道速度/画布高度
+    "fire_speed": 0.5,
+
+    //开场后的冷静时间(多少秒内不能攻击)
+    "calm_time": 4,
+
+    //随机粒子数量，20 + Math.random() * 10
+    //最小为[0,1]，是无粒子
+    "particle_number":[20,10],
+
+    //火球的攻击范围/画布高度
+    "fireball_range" : 5,
+
+    //火球技能的伤害/画布高度
+    "fireball_damage": 0.01,
+
+    //火球的颜色
+    "fireball_color":"orange",
+
+    //火球技能的伤害(被攻击后减移速的比例)
+    "reduce_ratio": 0.8,
+
+    //玩家的死亡大小
+    "dead_szie": 10,
+
+
+
+
+//------------------------playground/zbase.js-------------------------
+    //玩家初始大小百分比(相对于浏览器的宽)
+    "players_size_percent": 0.05,
+
+    //玩家自己的颜色
+    "self_color": "white",
+
+    //玩家的移动速度，用每秒移动高度的百分比表示
+    "player_speed_percent": 0.15,
+
+    //电脑玩家的数量
+    "AIs_number": 5,
+
+    //所有玩家的颜色列表
+    "color_select": ["#c66f35", "gree", "#c0d6cb", "#1cce31", "#9fa0d7", "#cc99ff"]
+//------------------------------------------------------------------------
+}
+
+
 
 class AcGameMenu {
     constructor(root) {
@@ -132,7 +220,7 @@ class GameMap extends AcGameObject {
 
     render() {
         //改变背景的不透明度，以实现移动残影
-        this.ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+        this.ctx.fillStyle = gameParameters.background_color;
         //fillRect()绘制矩形的方法
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
@@ -155,14 +243,14 @@ class Particle extends AcGameObject {
         //粒子的颜色应该和玩家的颜色相等
         this.color = player.color;
         // 粒子半径
-        this.radius = Math.random() * player.radius * 0.4;
+        this.radius = Math.random() * player.radius * gameParameters.particle_size_percent;
         // 释放速度
-        this.speed = player.speed * 20;
+        this.speed = player.speed * gameParameters.particle_speed_percent;
 
         // 固定参数，粒子的移动距离
-        this.move_length = Math.max(0.5, Math.random()) * player.radius * 4;
+        this.move_length = Math.max(gameParameters.particle_move_length[0], Math.random()) * player.radius * gameParameters.particle_move_length[1];
         // 减速摩擦力
-        this.friction = 0.85;
+        this.friction = gameParameters.particle_friction;
         // 误差范围
         this.eps = 1;
 
@@ -191,7 +279,7 @@ class Particle extends AcGameObject {
             return false;
         }
 
-        this.radius *= 0.98;
+        this.radius *= gameParameters.particle_feed;
         //每一帧都刷新粒子的位置
         let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
         this.x += this.vx * moved;
@@ -253,9 +341,6 @@ class Particle extends AcGameObject {
         this.eps = 0.1;
         this.friction = 0.9;
         this.spent_time = 0;
-        this.eps = 0.1;
-        this.friction = 0.9;
-        this.spent_time = 0;
 
         this.cur_skill = null;
 
@@ -282,14 +367,20 @@ class Particle extends AcGameObject {
     update() {
         //实现电脑玩家的自动攻击
         this.spent_time += this.timedelta / 1000;
-        if (!this.is_me && Math.random() < 1 / 300.0) {
+
+        if (!this.is_me && Math.random() < gameParameters.AIs_attack_frequency) {
             let player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
+            //是否开启相互攻击
+            if (!gameParameters.attack_eachother) {
+                player = this.playground.players[0];
+            }
+            //实现简单的移动预测
             let tx = player.x + player.speed * this.vx * this.timedelta / 1000 * 0.3;
             let ty = player.y + player.speed * this.vy * this.timedelta / 1000 * 0.3;
             this.shoot_fireball(tx, ty);
         }
 
-        if (this.damage_speed > 10) {
+        if (this.damage_speed > gameParameters.damage_speed) {
             this.vx = this.vy = 0;
             this.move_length = 0;
             this.x += this.damage_x * this.damage_speed * this.timedelta / 1000;
@@ -378,13 +469,16 @@ class Particle extends AcGameObject {
      */
     shoot_fireball(tx, ty) {
         let x = this.x, y = this.y;
-        let radius = this.playground.height * 0.01;
+        let radius = this.playground.height * gameParameters.fireball_size;
         let angle = Math.atan2(ty - this.y, tx - this.x);
         let vx = Math.cos(angle), vy = Math.sin(angle);
-        let speed = this.playground.height * 0.5;
-        let mone_length = this.playground.height * 1;
-        if (this.spent_time > 4) {
-            new FireBall(this.playground, this, x, y, radius, vx, vy, speed, mone_length, this.playground.height * 0.01, "orange");
+        let speed = this.playground.height * gameParameters.fire_speed;
+        let mone_length = this.playground.height * gameParameters.fireball_range;
+        //所有人必须在开局4秒后才能释放火球
+        if (this.spent_time > gameParameters.calm_time) {
+            this.playground.fireballs.push(
+                new FireBall(this.playground, this, x, y, radius, vx, vy, speed, mone_length, this.playground.height * gameParameters.fireball_damage, gameParameters.fireball_color)
+            )
         }
     }
 
@@ -395,14 +489,14 @@ class Particle extends AcGameObject {
      */
     is_attacked(angle, damage) {
         //实现被攻击后的粒子效果
-        for (let i = 0; i < 20 + Math.random() * 10; i++) {
+        for (let i = 0; i < gameParameters.particle_number[0] + Math.random() * gameParameters.particle_number[1]; i++) {
             //这里参考了大佬的代码，比y总的传参更合理
             new Particle(this.playground, this);
         }
         //受到攻击的玩家，移速变慢，体积变小,发射技能的弹道速度变慢
         this.radius -= damage;
-        this.speed *= 0.8;
-        if (this.radius < 10) {
+        this.speed *= gameParameters.reduce_ratio;
+        if (this.radius < gameParameters.dead_szie) {
             this.destroy();
             return false;
         }
@@ -436,6 +530,15 @@ class Particle extends AcGameObject {
         this.vx = Math.cos(angle);
         this.vy = Math.sin(angle);
     }
+
+    on_destroy() {
+        for (let i = 0; i < this.playground.players.length; i++) {
+            if (this.playground.players[i] === this) {
+                this.playground.players.splice(i, 1);
+            }
+        }
+    }
+
 
 }
 
@@ -498,6 +601,16 @@ class FireBall extends AcGameObject {
                 this.attack(player);
             }
         }
+        //实现火球碰撞后相互抵消,将火球从AC_GAME_OBJECTS = [],中删除
+        for (let i = 0; i < this.playground.fireballs.length; i++) {
+            let fireball = this.playground.fireballs[i];
+
+            if (fireball != this && this.is_collision(fireball)) {
+                this.destroy();
+                fireball.destroy();
+                break;
+            }
+        }
 
         this.render();
     }
@@ -520,17 +633,20 @@ class FireBall extends AcGameObject {
      * @param player
      * @returns {boolean}
      */
-    is_collision(player){
-        let dis = this.get_dist(this.x,this.y,player.x,player.y);
-        return dis<this.radius+player.radius;
+    is_collision(obj) {
+        let dis = this.get_dist(this.x, this.y, obj.x, obj.y);
+        return dis < this.radius + obj.radius;
     }
 
     /**
-     * 实现攻击效果
+     * 火球击中玩家时
      * @param player
      */
     attack(player) {
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
+        //当你的火球击中其他玩家，自己会"回血"，即体积增大，但速度变慢
+        this.player.radius += this.damage / 2;
+        this.player.speed /= 0.95;
         player.is_attacked(angle, this.damage);
         this.destroy();
     }
@@ -545,6 +661,19 @@ class FireBall extends AcGameObject {
         let dy = y1 - y2;
         return Math.sqrt(dx * dx + dy * dy);
     }
+
+    /**
+     * 从playground.fireballs中将火球删除
+     */
+    on_destroy() {
+        for (let i = 0; i < this.playground.fireballs.length; i++) {
+            if (this.playground.fireballs[i] === this) {
+                this.playground.fireballs.splice(i, 1);
+            }
+        }
+    }
+
+
 }class AcGamePlayground {
     constructor(root) {
         this.root = root;
@@ -558,10 +687,11 @@ class FireBall extends AcGameObject {
         this.game_map = new GameMap(this);
         //创建玩家对象
         this.players = [];
-        this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true));
+        this.fireballs = [];
+        this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * gameParameters.players_size_percent, "white", this.height * gameParameters.player_speed_percent, true));
         //创建5个电脑玩家
-        for (let i = 0; i < 5; i++) {
-            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, this.get_random_color(), this.height * 0.15, false));
+        for (let i = 0; i < gameParameters.AIs_number; i++) {
+            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * gameParameters.players_size_percent, this.get_random_color(), this.height * gameParameters.player_speed_percent, false));
         }
         this.start();
 
@@ -579,8 +709,8 @@ class FireBall extends AcGameObject {
     }
 
     get_random_color(){
-        let color_select = ["red","gree","#c0d6cb","#1cce31","#9fa0d7","#cc99ff"];
-        return color_select[Math.floor((Math.random()*6))];
+
+        return gameParameters.color_select[Math.floor((Math.random()*gameParameters.color_select.length))];
     }
 
     /**
@@ -602,7 +732,7 @@ class FireBall extends AcGameObject {
         this.id = id;
         this.$ac_game = $('#' + id);
         //为了方便调试，不显示菜单界面
-        // this.menu = new AcGameMenu(this);
+        this.menu = new AcGameMenu(this);
         this.playground = new AcGamePlayground(this);
         this.start();
     }

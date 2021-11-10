@@ -11,10 +11,11 @@ class AcGamePlayground {
         this.game_map = new GameMap(this);
         //创建玩家对象
         this.players = [];
-        this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true));
+        this.fireballs = [];
+        this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * gameParameters.players_size_percent, "white", this.height * gameParameters.player_speed_percent, true));
         //创建5个电脑玩家
-        for (let i = 0; i < 5; i++) {
-            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * 0.05, this.get_random_color(), this.height * 0.15, false));
+        for (let i = 0; i < gameParameters.AIs_number; i++) {
+            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * gameParameters.players_size_percent, this.get_random_color(), this.height * gameParameters.player_speed_percent, false));
         }
         this.start();
 
@@ -32,8 +33,8 @@ class AcGamePlayground {
     }
 
     get_random_color(){
-        let color_select = ["red","gree","#c0d6cb","#1cce31","#9fa0d7","#cc99ff"];
-        return color_select[Math.floor((Math.random()*6))];
+
+        return gameParameters.color_select[Math.floor((Math.random()*gameParameters.color_select.length))];
     }
 
     /**

@@ -57,6 +57,16 @@ class FireBall extends AcGameObject {
                 this.attack(player);
             }
         }
+        //实现火球碰撞后相互抵消,将火球从AC_GAME_OBJECTS = [],中删除
+        for (let i = 0; i < this.playground.fireballs.length; i++) {
+            let fireball = this.playground.fireballs[i];
+
+            if (fireball != this && this.is_collision(fireball)) {
+                this.destroy();
+                fireball.destroy();
+                break;
+            }
+        }
 
         this.render();
     }
@@ -79,17 +89,20 @@ class FireBall extends AcGameObject {
      * @param player
      * @returns {boolean}
      */
-    is_collision(player){
-        let dis = this.get_dist(this.x,this.y,player.x,player.y);
-        return dis<this.radius+player.radius;
+    is_collision(obj) {
+        let dis = this.get_dist(this.x, this.y, obj.x, obj.y);
+        return dis < this.radius + obj.radius;
     }
 
     /**
-     * 实现攻击效果
+     * 火球击中玩家时
      * @param player
      */
     attack(player) {
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
+        //当你的火球击中其他玩家，自己会"回血"，即体积增大，但速度变慢
+        this.player.radius += this.damage / 2;
+        this.player.speed /= 0.95;
         player.is_attacked(angle, this.damage);
         this.destroy();
     }
@@ -104,4 +117,17 @@ class FireBall extends AcGameObject {
         let dy = y1 - y2;
         return Math.sqrt(dx * dx + dy * dy);
     }
+
+    /**
+     * 从playground.fireballs中将火球删除
+     */
+    on_destroy() {
+        for (let i = 0; i < this.playground.fireballs.length; i++) {
+            if (this.playground.fireballs[i] === this) {
+                this.playground.fireballs.splice(i, 1);
+            }
+        }
+    }
+
+
 }
