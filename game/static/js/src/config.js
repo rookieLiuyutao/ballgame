@@ -49,8 +49,8 @@ var gameParameters = {
     //最小为[0,1]，是无粒子
     "particle_number":[20,10],
 
-    //火球的攻击范围/画布高度
-    "fireball_range" : 5,
+    //火球的攻击范围/自己的血量
+    "fireball_range" : 10,
 
     //火球技能的伤害/画布高度
     "fireball_damage": 0.01,

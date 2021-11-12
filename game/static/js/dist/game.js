@@ -49,8 +49,8 @@ var gameParameters = {
     //最小为[0,1]，是无粒子
     "particle_number":[20,10],
 
-    //火球的攻击范围/画布高度
-    "fireball_range" : 5,
+    //火球的攻击范围/自己的血量
+    "fireball_range" : 10,
 
     //火球技能的伤害/画布高度
     "fireball_damage": 0.01,
@@ -368,24 +368,33 @@ class Particle extends AcGameObject {
         //实现电脑玩家的自动攻击
         this.spent_time += this.timedelta / 1000;
 
-        if (!this.is_me && Math.random() < gameParameters.AIs_attack_frequency) {
-            let player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
+        if (Math.random() < gameParameters.AIs_attack_frequency) {
+            let from_player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
+            let to_player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
+            if (from_player === to_player || from_player.is_me) {
+                return;
+            }
             //是否开启相互攻击
             if (!gameParameters.attack_eachother) {
-                player = this.playground.players[0];
+                to_player = this.playground.players[0];
             }
             //实现简单的移动预测
-            let tx = player.x + player.speed * this.vx * this.timedelta / 1000 * 0.3;
-            let ty = player.y + player.speed * this.vy * this.timedelta / 1000 * 0.3;
-            this.shoot_fireball(tx, ty);
+            let tx = to_player.x + to_player.speed * this.vx * this.timedelta / 1000 * 0.3;
+            let ty = to_player.y + to_player.speed * this.vy * this.timedelta / 1000 * 0.3;
+            from_player.shoot_fireball(tx, ty);
         }
-
+        //实现击退动画
         if (this.damage_speed > gameParameters.damage_speed) {
             this.vx = this.vy = 0;
             this.move_length = 0;
             this.x += this.damage_x * this.damage_speed * this.timedelta / 1000;
             this.y += this.damage_y * this.damage_speed * this.timedelta / 1000;
+            //保证玩家不会被打出画面
+            if (this.x < 0 || this.x > this.playground.width || this.y < 0 || this.y > this.playground.height) {
+                this.damage_speed = 0;
+            }
             this.damage_speed *= this.friction;
+
         } else {
             //玩家已经走到了目标地点
             if (this.move_length < this.eps) {
@@ -441,6 +450,8 @@ class Particle extends AcGameObject {
                 // console.log(e.clientX, e.clientY);
                 //每一次点击都要计算出当前点到点击位置的距离
                 outer.move_to(e.clientX, e.clientY);
+                console.log(outer.speed);
+                console.log((outer.playground.height * gameParameters.players_size_percent - outer.radius) * 0.5);
 
             } else if (e.which === 1) {
                 //只有当按下键盘选中技能后，点击鼠标才能释放技能
@@ -473,7 +484,10 @@ class Particle extends AcGameObject {
         let angle = Math.atan2(ty - this.y, tx - this.x);
         let vx = Math.cos(angle), vy = Math.sin(angle);
         let speed = this.playground.height * gameParameters.fire_speed;
-        let mone_length = this.playground.height * gameParameters.fireball_range;
+        let mone_length = this.radius * gameParameters.fireball_range;
+        if (!this.is_me) {
+            mone_length = this.radius * this.playground.height;
+        }
         //所有人必须在开局4秒后才能释放火球
         if (this.spent_time > gameParameters.calm_time) {
             this.playground.fireballs.push(
@@ -495,7 +509,7 @@ class Particle extends AcGameObject {
         }
         //受到攻击的玩家，移速变慢，体积变小,发射技能的弹道速度变慢
         this.radius -= damage;
-        this.speed *= gameParameters.reduce_ratio;
+        this.speed = this.playground.height * gameParameters.player_speed_percent + (this.playground.height * gameParameters.players_size_percent - this.radius)*2;
         if (this.radius < gameParameters.dead_szie) {
             this.destroy();
             return false;
@@ -503,7 +517,7 @@ class Particle extends AcGameObject {
         //计算受到攻击后的击退方向
         this.damage_x = Math.cos(angle);
         this.damage_y = Math.sin(angle);
-        this.damage_speed = this.radius * 50;
+        this.damage_speed = this.playground.height * 2 + (this.radius - this.playground.height * gameParameters.players_size_percent) * 50;
 
 
     }
@@ -646,8 +660,8 @@ class FireBall extends AcGameObject {
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
         //当你的火球击中其他玩家，自己会"回血"，即体积增大，但速度变慢
         this.player.radius += this.damage / 2;
-        this.player.speed /= 0.95;
         player.is_attacked(angle, this.damage);
+        this.radius = this.playground.height * gameParameters.fireball_size + (this.player.radius - this.playground.height * gameParameters.players_size_percent) * 0.5;
         this.destroy();
     }
 
