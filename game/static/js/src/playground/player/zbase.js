@@ -170,7 +170,7 @@ class Player extends AcGameObject {
             }
         });
 
-
+    }
     /**
      * 创建一个飞行的火球技能
      * @param tx 点击位置的横坐标
