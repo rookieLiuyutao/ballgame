@@ -344,7 +344,7 @@ class Particle extends AcGameObject {
         this.status = null;
         this.nouseX = 0;
         this.mouseY = 0;
-        this.$after_die = $(`<div class = "ac_game_die_animation">失败</div>`);
+        this.$after_die = $(`<div class = "ac_game_die_animation"></div>`);
         this.cur_skill = null;
 
     }

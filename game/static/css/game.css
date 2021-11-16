@@ -8,24 +8,25 @@
 
 
 .ac_game_die_animation {
-    font-size: 8vh;
-    text-align: center;
-    color: red;
+    width: 30%;
+    height: 30%;
+    background-image: url("/static/image/menu/fail.png");
+    background-size: 100% 100%;
+    user-select: none;
     animation: hueRotate 2s cubic-bezier(0.01, 0, 0, 1.01);
-    display: flex;
     position: absolute;
-    top: 42%;
-    left: 42%;
+    top: 35%;
+    left: 35%;
 
 }
 
 @keyframes hueRotate {
     0% {
-        color: rgba(225,11,43,0);
+        opacity: 0;
     }
 
     100% {
-        color: rgba(225,11,43,100);
+        opacity: 1;
     }
 }
 
