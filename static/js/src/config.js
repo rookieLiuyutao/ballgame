@@ -34,7 +34,7 @@ var gameParameters = {
     "damage_speed":10,
 
     //是否开启互相攻击
-    "attack_eachother":true,
+    "attack_eachother":false,
 
     //火球大小/画布高度
     "fireball_size":0.01,
@@ -78,7 +78,7 @@ var gameParameters = {
     "player_speed_percent": 0.15,
 
     //电脑玩家的数量
-    "AIs_number": 5,
+    "AIs_number": 15,
 
     //所有玩家的颜色列表
     "color_select": ["#b3ffbc", "gree", "#e666ff", "#b4a4ca", "#ebd2b8", "#3c374a"]

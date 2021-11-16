@@ -35,9 +35,10 @@ class Player extends AcGameObject {
         this.eps = 0.1;
         this.friction = 0.9;
         this.spent_time = 0;
+        this.status = null;
         this.nouseX = 0;
         this.mouseY = 0;
-
+        this.$after_die = $(`<div class = "ac_game_die_animation">失败</div>`);
         this.cur_skill = null;
 
     }
@@ -86,7 +87,7 @@ class Player extends AcGameObject {
             this.x += this.damage_x * this.damage_speed * this.timedelta / 1000;
             this.y += this.damage_y * this.damage_speed * this.timedelta / 1000;
             //保证玩家不会被打出画面
-            if (this.x < this.radius || this.x > this.playground.width + this.radius || this.y < this.radius || this.y > this.playground.height + this.radius) {
+            if (this.x < this.radius || this.x > this.playground.width - this.radius || this.y < this.radius || this.y > this.playground.height - this.radius) {
                 this.damage_speed = 0;
             }
             this.damage_speed *= this.friction;
@@ -160,7 +161,7 @@ class Player extends AcGameObject {
                 outer.cur_skill = "fireball";
                 outer.playground.game_map.$canvas.mousemove(function (e) {
                     //只有当按下键盘选中技能后，点击鼠标才能释放技能
-                    if (outer.cur_skill === "fireball") {
+                    if (outer.cur_skill === "fireball" && outer.status != "die") {
                         outer.shoot_fireball(e.clientX - rect.left, e.clientY - rect.top);
                     }
                     //在释放完技能后取消技能选中
@@ -171,6 +172,7 @@ class Player extends AcGameObject {
         });
 
     }
+
     /**
      * 创建一个飞行的火球技能
      * @param tx 点击位置的横坐标
@@ -209,8 +211,14 @@ class Player extends AcGameObject {
         this.radius -= damage;
         this.speed = this.playground.height * gameParameters.player_speed_percent + (this.playground.height * gameParameters.players_size_percent - this.radius) * 2;
         if (this.radius < gameParameters.dead_szie) {
+            this.status = "die";
+            if (this.is_me) {
+                $("div.ac-game-playground").append(this.$after_die);
+            }
+            // this.playground.$playground.$("canvas").append(this.$after_die);
             this.destroy();
             return false;
+
         }
         //计算受到攻击后的击退方向
         this.damage_x = Math.cos(angle);

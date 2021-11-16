@@ -1,0 +1,11 @@
+--2021-11-16 21:44:33--  https://gimg2.baidu.com/image_search/src=http%3A%2F%2Finews.gtimg.com%2Fnewsapp_match%2F0%2F11156556256%2F0.jpg
+Resolving gimg2.baidu.com (gimg2.baidu.com)... 101.72.199.36, 2408:871a:5100:101::6548:c724
+Connecting to gimg2.baidu.com (gimg2.baidu.com)|101.72.199.36|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 2504614 (2.4M) [image/gif]
+Saving to: ‘background.gif’
+
+background.gif     0%[          ]       0  --.-KB/s               background.gif   100%[=========>]   2.39M  --.-KB/s    in 0.07s   
+
+2021-11-16 21:44:33 (36.0 MB/s) - ‘background.gif’ saved [2504614/2504614]
+

@@ -6,6 +6,30 @@
     user-select: none;
 }
 
+
+.ac_game_die_animation {
+    font-size: 8vh;
+    text-align: center;
+    color: red;
+    animation: hueRotate 2s cubic-bezier(0.01, 0, 0, 1.01);
+    display: flex;
+    position: absolute;
+    top: 42%;
+    left: 42%;
+
+}
+
+@keyframes hueRotate {
+    0% {
+        color: rgba(225,11,43,0);
+    }
+
+    100% {
+        color: rgba(225,11,43,100);
+    }
+}
+
+
 .ac-game-menu-field {
     width: 20vw;
     position: relative;
@@ -20,7 +44,7 @@
     font-size: 4vh;
     font-style: italic;
     text-align: center;
-    background-color: rgba(39,21,28, 0.6);
+    background-color: rgba(39, 21, 28, 0.6);
     border-radius: 10px;
     letter-spacing: 0.5vw;
     cursor: pointer;
