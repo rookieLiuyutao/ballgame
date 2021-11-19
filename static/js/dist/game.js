@@ -107,6 +107,7 @@ class AcGameMenu {
               </div>
           </div>
         `);
+        this.$menu.hide();
         this.root.$ac_game.append(this.$menu);
         this.$single_mode = this.$menu.find('.ac-game-menu-field-item-single-mode');
         this.$multi_mode = this.$menu.find('.ac-game-menu-field-item-multi-mode');
@@ -428,6 +429,11 @@ class Particle extends AcGameObject {
      * 在每一帧渲染画面
      */
     render() {
+        // var img = new Image();
+        //
+        // img.onload = function () {
+        //     ctx.drawImage(img, 0, 0, this.radius, this.radius);
+        // }
         //渲染一个圆
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
@@ -754,10 +760,97 @@ class FireBall extends AcGameObject {
         }
     }
 }
- export class AcGame {
-    constructor(id) {
+class Settings {
+    constructor(root) {
+        this.root = root;
+        //表明在哪个端的参数
+        this.platform = "WEB";
+        if (this.root.AcWingOS) this.platform = "ACAPP";
+        this.$settings = $(`
+
+        `);
+        this.start();
+    }
+
+    /**
+     * 在对象创建时执行的函数
+     */
+    start() {
+        this.getinfo();
+        // this.add_listening_events();
+    }
+
+    /**
+     * 获得后端信息的函数
+     */
+    getinfo() {
+        let outer = this;
+
+        $.ajax({
+            url: "https://app220.acapp.acwing.com.cn/settings/getinfo/",
+            type: "GET",
+            data: {
+                platform: outer.platform,
+            },
+            //得到后端参数后执行的函数
+            success: function (resp) {
+                console.log(resp);
+                if (resp.result === "success") {
+                    outer.username = resp.username;
+                    outer.photo = resp.photo;
+                    //登录界面隐藏
+                    outer.hide();
+                    //显示菜单界面
+                    outer.root.menu.show();
+                } else {
+                    //获取信息失败(即用户未登录)，则继续显示登录界面
+                    outer.open_login();
+                }
+            }
+        });
+    }
+
+    /**
+     * 打开登录界面
+     */
+    open_login() {
+        this.$register.hide();
+        this.$login.show();
+    }
+
+    /**
+     * 打开注册界面
+     */
+    open_register() {
+        this.$login.hide();
+        this.$register.show();
+    }
+
+    /**
+     * 隐藏注册/登录界面
+     */
+    hide() {
+        this.$settings.hide();
+    }
+
+    /**
+     * 显示注册/登录界面
+     */
+    show() {
+        this.$settings.show();
+    }
+} export class AcGame {
+     /**
+      *
+      * @param id
+      * @param AcWiingOs 传入acwnig接口，为了支持多端，用来判断是在哪个端执行的
+      */
+    constructor(id,AcWingOs) {
         this.id = id;
+        this.AcwingOs = AcWingOs
         this.$ac_game = $('#' + id);
+
+        this.settings = new Settings(this);
         //为了方便调试，不显示菜单界面
         this.menu = new AcGameMenu(this);
         this.playground = new AcGamePlayground(this);

@@ -122,6 +122,11 @@ class Player extends AcGameObject {
      * 在每一帧渲染画面
      */
     render() {
+        // var img = new Image();
+        //
+        // img.onload = function () {
+        //     ctx.drawImage(img, 0, 0, this.radius, this.radius);
+        // }
         //渲染一个圆
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
