@@ -38,6 +38,11 @@ class Player extends AcGameObject {
         this.status = null;
         this.nouseX = 0;
         this.mouseY = 0;
+        if (this.is_me) {
+            this.img = new Image();
+            this.img.src = this.playground.root.settings.photo;
+        }
+
         this.$after_die = $(`<div class = "ac_game_die_animation"></div>`);
         this.cur_skill = null;
 
@@ -122,17 +127,23 @@ class Player extends AcGameObject {
      * 在每一帧渲染画面
      */
     render() {
-        // var img = new Image();
-        //
-        // img.onload = function () {
-        //     ctx.drawImage(img, 0, 0, this.radius, this.radius);
-        // }
-        //渲染一个圆
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        this.ctx.fillStyle = this.color;
-        this.ctx.fill();
-        //--------------------------------------------------------------
+        //渲染用户头像
+        if (this.is_me) {
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.stroke();
+            this.ctx.clip();
+            this.ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+            this.ctx.restore();
+        } else {
+            //渲染一个圆
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.fillStyle = this.color;
+            this.ctx.fill();
+        }
+
     }
 
 

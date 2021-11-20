@@ -4,9 +4,9 @@
       * @param id
       * @param AcWiingOs 传入acwnig接口，为了支持多端，用来判断是在哪个端执行的
       */
-    constructor(id,AcWingOs) {
+    constructor(id,AcWingOS) {
         this.id = id;
-        this.AcwingOs = AcWingOs
+        this.AcWingOS = AcWingOS
         this.$ac_game = $('#' + id);
 
         this.settings = new Settings(this);
