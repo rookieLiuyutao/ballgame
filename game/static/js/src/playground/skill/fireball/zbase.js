@@ -58,15 +58,15 @@ class FireBall extends AcGameObject {
             }
         }
         //实现火球碰撞后相互抵消,将火球从AC_GAME_OBJECTS = [],中删除
-        for (let i = 0; i < this.playground.fireballs.length; i++) {
-            let fireball = this.playground.fireballs[i];
-
-            if (fireball != this && this.is_collision(fireball)) {
-                this.destroy();
-                fireball.destroy();
-                break;
-            }
-        }
+        // for (let i = 0; i < this.playground.fireballs.length; i++) {
+        //     let fireball = this.playground.fireballs[i];
+        //
+        //     if (fireball != this && this.is_collision(fireball)) {
+        //         this.destroy();
+        //         fireball.destroy();
+        //         break;
+        //     }
+        // }
 
         this.render();
     }

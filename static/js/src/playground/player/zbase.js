@@ -83,7 +83,8 @@ class Player extends AcGameObject {
             //实现简单的移动预测
             let tx = to_player.x + to_player.speed * this.vx * this.timedelta / 1000 * 0.3;
             let ty = to_player.y + to_player.speed * this.vy * this.timedelta / 1000 * 0.3;
-            from_player.shoot_fireball(tx, ty);
+            // from_player.shoot_fireball(tx, ty);
+            from_player.shoot_boss_fireball();
             //人机狂暴模式
             if (gameParameters.is_crazy && this.playground.players.length < gameParameters.crazy_min_number) {
                 for (let i = 0; i < 4; i++) {
@@ -220,6 +221,15 @@ class Player extends AcGameObject {
             )
         }
     }
+
+    shoot_boss_fireball(){
+        for (let i = 0; i <8 ; i++) {
+            let tx = this.x*Math.cos(Math.PI*i/4)+this.playground.width,ty = this.y *Math.sin(Math.PI*i/4)+this.playground.height;
+            this.shoot_fireball(tx,ty);
+            // console.log(tx,ty)
+        }
+    }
+
 
     /**
      * 被攻击后的效果
