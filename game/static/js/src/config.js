@@ -30,6 +30,12 @@ var gameParameters = {
     //电脑玩家自动攻击的频率
     "AIs_attack_frequency": 1/180,
 
+    //是否开启狂暴模式
+    "is_crazy":true,
+
+    //开启狂暴模式时的最小人数
+    "crazy_min_number":8,
+
     //最小击退速度
     "damage_speed":10,
 

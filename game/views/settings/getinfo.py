@@ -4,8 +4,8 @@ from game.models.player.player import Player
 
 #在acapp端的请求函数
 def getinfo_acapp(request):
-    #表中的第一条数据
-    player = Player.objects.all()[0]
+    #找到该用户
+    player = Player.objects.get(user=user)
     return JsonResponse({
         'result': "success",
         'username': player.user.username,
@@ -21,7 +21,7 @@ def getinfo_web(request):
             'result': "未登录"
         })
     else:
-        player = Player.objects.all()[0]
+        player = Player.objects.get(user=user)
         return JsonResponse({
             'result': "success",
             'username': player.user.username,

@@ -73,7 +73,7 @@ class Player extends AcGameObject {
         if (Math.random() < gameParameters.AIs_attack_frequency) {
             let from_player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
             let to_player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
-            if (from_player === to_player || from_player.is_me) {
+            if (from_player === to_player || from_player.is_me || from_player.status == "die") {
                 return;
             }
             //是否开启相互攻击
@@ -84,6 +84,13 @@ class Player extends AcGameObject {
             let tx = to_player.x + to_player.speed * this.vx * this.timedelta / 1000 * 0.3;
             let ty = to_player.y + to_player.speed * this.vy * this.timedelta / 1000 * 0.3;
             from_player.shoot_fireball(tx, ty);
+            //人机狂暴模式
+            if (gameParameters.is_crazy && this.playground.players.length < gameParameters.crazy_min_number) {
+                for (let i = 0; i < 4; i++) {
+                    // console.log(4)
+                    from_player.shoot_fireball(tx, ty);
+                }
+            }
         }
         //实现击退动画
         if (this.damage_speed > gameParameters.damage_speed) {
@@ -106,6 +113,7 @@ class Player extends AcGameObject {
                     //如果是电脑玩家，在到达目标位置的帧都随机一个新的目标位置
                     let tx = Math.random() * this.playground.width;
                     let ty = Math.random() * this.playground.height;
+
                     this.move_to(tx, ty);
                 }
             } else {
@@ -113,6 +121,7 @@ class Player extends AcGameObject {
                 //计算出两帧间的移动距离
                 let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
                 //计算这一帧位置的横纵坐标
+
                 this.x += this.vx * moved;
                 this.y += this.vy * moved;
                 this.move_length -= moved;
@@ -163,7 +172,7 @@ class Player extends AcGameObject {
             //e.which === 3，点击鼠标右键的事件
             //e.which === 1，点击鼠标左键的事件
             if (e.which === 3) {
-                // console.log(e.clientX, e.clientY);
+                // console.log(gameParameters.AIs_attack_frequency);
                 //每一次点击都要计算出当前点到点击位置的距离
                 outer.move_to(e.clientX - rect.left, e.clientY - rect.top);
 
@@ -236,6 +245,15 @@ class Player extends AcGameObject {
             return false;
 
         }
+        //人数小于6时，游戏难度提升，人机攻速提升3倍
+        if (gameParameters.is_crazy && this.playground.players.length < gameParameters.crazy_min_number) {
+            gameParameters.AIs_attack_frequency = 1 / 60
+            if (!this.is_me) {
+                this.vx *= 2
+                this.vy *= 2
+            }
+        }
+
         //计算受到攻击后的击退方向
         this.damage_x = Math.cos(angle);
         this.damage_y = Math.sin(angle);
@@ -265,6 +283,7 @@ class Player extends AcGameObject {
         let angle = Math.atan2(ty - this.y, tx - this.x);
         this.vx = Math.cos(angle);
         this.vy = Math.sin(angle);
+
     }
 
     on_destroy() {

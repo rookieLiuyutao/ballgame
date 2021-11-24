@@ -113,7 +113,7 @@ class Settings {
         this.$register_submit = this.$register.find(".ac-game-settings-submit>div>input");
         this.$register_error_message = this.$register.find(".ac-game-settings-error-message");
         this.$register_login = this.$register.find(".ac-game-settings-option");
-
+        this.$acwing_login = this.$settings.find('.ac-game-settings-quick-login-acwing img');
         this.$register.hide();
 
         this.root.$ac_game.append(this.$settings);
@@ -125,16 +125,20 @@ class Settings {
      * 在对象创建时执行的函数
      */
     start() {
-        this.getinfo();
-        this.add_listening_events();
+        if (this.platform === "ACAPP") {
+            this.getinfo_acapp();
+        } else {
+            this.getinfo_web();
+            this.add_listening_events();
+        }
+
     }
 
     /**
      * 获得后端信息的函数
      */
-    getinfo() {
+    getinfo_web() {
         let outer = this;
-
         $.ajax({
             url: "https://app220.acapp.acwing.com.cn/settings/getinfo/",
             type: "GET",
@@ -157,6 +161,7 @@ class Settings {
                 }
             }
         });
+        console.log(outer.photo)
     }
 
     /**
@@ -193,9 +198,63 @@ class Settings {
      * 鼠标点击后触发的函数
      */
     add_listening_events() {
+        let outer = this;
         this.add_listening_events_login();
         this.add_listening_events_register();
+
+        this.$acwing_login.click(function () {
+            outer.acwing_login();
+        });
     }
+
+    /**
+     *
+     */
+    acwing_login() {
+        $.ajax({
+            url: "https://app220.acapp.acwing.com.cn/settings/acwing_info/web/apply_code/",
+            type: "GET",
+            success: function (resp) {
+                console.log(resp);
+                if (resp.result === "success") {
+                    window.location.replace(resp.apply_code_url);
+                }
+            }
+        });
+    }
+
+    acapp_login(appid, redirect_uri, scope, state) {
+        let outer = this;
+
+        this.root.AcWingOS.api.oauth2.authorize(appid, redirect_uri, scope, state, function (resp) {
+            console.log("called from acapp_login function");
+            console.log(resp);
+            if (resp.result === "success") {
+                outer.username = resp.username;
+                outer.photo = resp.photo;
+                outer.hide();
+                outer.root.menu.show();
+            }
+        });
+    }
+
+    /**
+     * acapp端一键登录
+     */
+    getinfo_acapp() {
+        let outer = this;
+
+        $.ajax({
+            url: "https://app220.acapp.acwing.com.cn/settings/acwing_info/acapp/apply_code/",
+            type: "GET",
+            success: function (resp) {
+                if (resp.result === "success") {
+                    outer.acapp_login(resp.appid, resp.redirect_uri, resp.scope, resp.state);
+                }
+            }
+        });
+    }
+
 
     /**
      * 点击登录按钮后触发的函数

@@ -30,6 +30,12 @@ var gameParameters = {
     //电脑玩家自动攻击的频率
     "AIs_attack_frequency": 1/180,
 
+    //是否开启狂暴模式
+    "is_crazy":true,
+
+    //开启狂暴模式时的最小人数
+    "crazy_min_number":8,
+
     //最小击退速度
     "damage_speed":10,
 
@@ -381,7 +387,7 @@ class Particle extends AcGameObject {
         if (Math.random() < gameParameters.AIs_attack_frequency) {
             let from_player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
             let to_player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
-            if (from_player === to_player || from_player.is_me) {
+            if (from_player === to_player || from_player.is_me || from_player.status == "die") {
                 return;
             }
             //是否开启相互攻击
@@ -392,6 +398,13 @@ class Particle extends AcGameObject {
             let tx = to_player.x + to_player.speed * this.vx * this.timedelta / 1000 * 0.3;
             let ty = to_player.y + to_player.speed * this.vy * this.timedelta / 1000 * 0.3;
             from_player.shoot_fireball(tx, ty);
+            //人机狂暴模式
+            if (gameParameters.is_crazy && this.playground.players.length < gameParameters.crazy_min_number) {
+                for (let i = 0; i < 4; i++) {
+                    // console.log(4)
+                    from_player.shoot_fireball(tx, ty);
+                }
+            }
         }
         //实现击退动画
         if (this.damage_speed > gameParameters.damage_speed) {
@@ -414,6 +427,7 @@ class Particle extends AcGameObject {
                     //如果是电脑玩家，在到达目标位置的帧都随机一个新的目标位置
                     let tx = Math.random() * this.playground.width;
                     let ty = Math.random() * this.playground.height;
+
                     this.move_to(tx, ty);
                 }
             } else {
@@ -421,6 +435,7 @@ class Particle extends AcGameObject {
                 //计算出两帧间的移动距离
                 let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
                 //计算这一帧位置的横纵坐标
+
                 this.x += this.vx * moved;
                 this.y += this.vy * moved;
                 this.move_length -= moved;
@@ -471,7 +486,7 @@ class Particle extends AcGameObject {
             //e.which === 3，点击鼠标右键的事件
             //e.which === 1，点击鼠标左键的事件
             if (e.which === 3) {
-                // console.log(e.clientX, e.clientY);
+                // console.log(gameParameters.AIs_attack_frequency);
                 //每一次点击都要计算出当前点到点击位置的距离
                 outer.move_to(e.clientX - rect.left, e.clientY - rect.top);
 
@@ -544,6 +559,15 @@ class Particle extends AcGameObject {
             return false;
 
         }
+        //人数小于6时，游戏难度提升，人机攻速提升3倍
+        if (gameParameters.is_crazy && this.playground.players.length < gameParameters.crazy_min_number) {
+            gameParameters.AIs_attack_frequency = 1 / 60
+            if (!this.is_me) {
+                this.vx *= 2
+                this.vy *= 2
+            }
+        }
+
         //计算受到攻击后的击退方向
         this.damage_x = Math.cos(angle);
         this.damage_y = Math.sin(angle);
@@ -573,6 +597,7 @@ class Particle extends AcGameObject {
         let angle = Math.atan2(ty - this.y, tx - this.x);
         this.vx = Math.cos(angle);
         this.vy = Math.sin(angle);
+
     }
 
     on_destroy() {
@@ -887,7 +912,7 @@ class Settings {
         this.$register_submit = this.$register.find(".ac-game-settings-submit>div>input");
         this.$register_error_message = this.$register.find(".ac-game-settings-error-message");
         this.$register_login = this.$register.find(".ac-game-settings-option");
-
+        this.$acwing_login = this.$settings.find('.ac-game-settings-quick-login-acwing img');
         this.$register.hide();
 
         this.root.$ac_game.append(this.$settings);
@@ -899,16 +924,20 @@ class Settings {
      * 在对象创建时执行的函数
      */
     start() {
-        this.getinfo();
-        this.add_listening_events();
+        if (this.platform === "ACAPP") {
+            this.getinfo_acapp();
+        } else {
+            this.getinfo_web();
+            this.add_listening_events();
+        }
+
     }
 
     /**
      * 获得后端信息的函数
      */
-    getinfo() {
+    getinfo_web() {
         let outer = this;
-
         $.ajax({
             url: "https://app220.acapp.acwing.com.cn/settings/getinfo/",
             type: "GET",
@@ -931,6 +960,7 @@ class Settings {
                 }
             }
         });
+        console.log(outer.photo)
     }
 
     /**
@@ -967,9 +997,63 @@ class Settings {
      * 鼠标点击后触发的函数
      */
     add_listening_events() {
+        let outer = this;
         this.add_listening_events_login();
         this.add_listening_events_register();
+
+        this.$acwing_login.click(function () {
+            outer.acwing_login();
+        });
     }
+
+    /**
+     *
+     */
+    acwing_login() {
+        $.ajax({
+            url: "https://app220.acapp.acwing.com.cn/settings/acwing_info/web/apply_code/",
+            type: "GET",
+            success: function (resp) {
+                console.log(resp);
+                if (resp.result === "success") {
+                    window.location.replace(resp.apply_code_url);
+                }
+            }
+        });
+    }
+
+    acapp_login(appid, redirect_uri, scope, state) {
+        let outer = this;
+
+        this.root.AcWingOS.api.oauth2.authorize(appid, redirect_uri, scope, state, function (resp) {
+            console.log("called from acapp_login function");
+            console.log(resp);
+            if (resp.result === "success") {
+                outer.username = resp.username;
+                outer.photo = resp.photo;
+                outer.hide();
+                outer.root.menu.show();
+            }
+        });
+    }
+
+    /**
+     * acapp端一键登录
+     */
+    getinfo_acapp() {
+        let outer = this;
+
+        $.ajax({
+            url: "https://app220.acapp.acwing.com.cn/settings/acwing_info/acapp/apply_code/",
+            type: "GET",
+            success: function (resp) {
+                if (resp.result === "success") {
+                    outer.acapp_login(resp.appid, resp.redirect_uri, resp.scope, resp.state);
+                }
+            }
+        });
+    }
+
 
     /**
      * 点击登录按钮后触发的函数
