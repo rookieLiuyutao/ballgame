@@ -9,10 +9,10 @@ var gameParameters = {
 //--------------playground/particle/zbase.js----------------
 
     //粒子效果的最大粒子半径/玩家半径的比值
-    "particle_size_percent": 0.4,
+    "particle_size": 0.4,
 
     //粒子速度/其玩家速度，的比值
-    "particle_speed_percent": 20,
+    "particle_speed": 20,
 
     //粒子移动距离参数Math.max(0.5, Math.random()) * player.radius * 4
     "particle_move_length": [0.5, 4],
@@ -37,7 +37,7 @@ var gameParameters = {
     "crazy_min_number":8,
 
     //最小击退速度
-    "damage_speed":10,
+    "damage_speed":1,
 
     //是否开启互相攻击
     "attack_eachother":false,
@@ -55,33 +55,34 @@ var gameParameters = {
     //最小为[0,1]，是无粒子
     "particle_number":[20,10],
 
+    "AIs_fireball_range": 100,
     //火球的攻击范围/自己的血量
-    "fireball_range" : 10,
+    "fireball_range" : 5,
 
-    //火球技能的伤害/画布高度
-    "fireball_damage": 0.01,
+    //火球技能的伤害
+    "fireball_damage": 0.002,
 
     //火球的颜色
     "fireball_color":"orange",
 
     //火球技能的伤害(被攻击后减移速的比例)
     "reduce_ratio": 0.8,
-
-    //玩家的死亡大小
-    "dead_szie": 10,
+    //
+    // //玩家的死亡大小
+    // "dead_szie": 10,
 
 
 
 
 //------------------------playground/zbase.js-------------------------
-    //玩家初始大小百分比(相对于浏览器的宽)
-    "players_size_percent": 0.05,
+    //玩家初始大小百分比
+    "players_size": 0.05,
 
     //玩家自己的颜色
     "self_color": "white",
 
     //玩家的移动速度，用每秒移动高度的百分比表示
-    "player_speed_percent": 0.15,
+    "player_speed": 0.15,
 
     //电脑玩家的数量
     "AIs_number": 15,
@@ -130,13 +131,15 @@ class AcGameMenu {
         let outer = this;
         this.$single_mode.click(function(){
             outer.hide();
-            outer.root.playground.show();
+            outer.root.playground.show("single mode");
         });
         this.$multi_mode.click(function(){
-            console.log("click multi mode");
+            outer.hide();
+            outer.root.playground.show("multi mode");
+            console.log("多人模式")
+
         });
         this.$settings.click(function(){
-            console.log("click settings");
             outer.root.settings.logout_on_remote();
         });
     }
@@ -160,6 +163,7 @@ class AcGameObject {
 
         this.has_called_start = false;  // 是否执行过start函数
         this.timedelta = 0;  // 当前帧距离上一帧的时间间隔
+        this.uuid = this.create_uuid();//给每个对象生成一个唯一uid
     }
 
     start() {  // 只会在第一帧执行一次
@@ -171,10 +175,20 @@ class AcGameObject {
     on_destroy() {  // 在被销毁前执行一次
     }
 
+    create_uuid() {
+        let res = "";
+        for (let i = 0; i < 8; i++) {
+            let x = parseInt(Math.floor(Math.random() * 10));  // 返回[0, 1)之间的数
+            res += x;
+        }
+        return res;
+    }
+
+
     destroy() {  // 删掉该物体
         this.on_destroy();
         //遍历一遍所有对象，找到当前对象并删除
-        for (let i = 0; i < AC_GAME_OBJECTS.length; i ++ ) {
+        for (let i = 0; i < AC_GAME_OBJECTS.length; i++) {
             if (AC_GAME_OBJECTS[i] === this) {
                 AC_GAME_OBJECTS.splice(i, 1);
                 break;
@@ -185,9 +199,9 @@ class AcGameObject {
 
 let last_timestamp;
 //用递归的结构，保证每一帧都调用一次函数
-let AC_GAME_ANIMATION = function(timestamp) {
+let AC_GAME_ANIMATION = function (timestamp) {
     //每一帧要遍历所有物体，让每个物体执行update函数
-    for (let i = 0; i < AC_GAME_OBJECTS.length; i ++ ) {
+    for (let i = 0; i < AC_GAME_OBJECTS.length; i++) {
         let obj = AC_GAME_OBJECTS[i];
         //用has_called_start标记每个物体，保证每一帧，每个物体只执行一次函数
         if (!obj.has_called_start) {
@@ -222,6 +236,16 @@ class GameMap extends AcGameObject {
     start() {
     }
 
+    resize() {
+        this.ctx.canvas.width = this.playground.width;
+        this.ctx.canvas.height = this.playground.height;
+        this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        console.log("playground的大小为：" + this.playground.width, this.playground.height)
+        console.log("canvas:"+this.ctx.canvas.width, this.ctx.canvas.height)
+
+    }
+
     update() {
         this.render();
     }
@@ -251,16 +275,16 @@ class Particle extends AcGameObject {
         //粒子的颜色应该和玩家的颜色相等
         this.color = player.color;
         // 粒子半径
-        this.radius = Math.random() * player.radius * gameParameters.particle_size_percent;
+        this.radius = Math.random() * player.radius * gameParameters.particle_size;
         // 释放速度
-        this.speed = player.speed * gameParameters.particle_speed_percent;
+        this.speed = player.speed * gameParameters.particle_speed;
 
         // 固定参数，粒子的移动距离
         this.move_length = Math.max(gameParameters.particle_move_length[0], Math.random()) * player.radius * gameParameters.particle_move_length[1];
         // 减速摩擦力
         this.friction = gameParameters.particle_friction;
         // 误差范围
-        this.eps = 1;
+        this.eps = 0.01;
 
         // 随机参数，释放方向
         // 弧度制
@@ -304,8 +328,10 @@ class Particle extends AcGameObject {
      */
     render() {
         //渲染一个圆
+
+        let scale = this.playground.scale;
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
         //--------------------------------------------------------------
@@ -321,16 +347,21 @@ class Particle extends AcGameObject {
      * @param radius 圆的半径，每个玩家用圆表示
      * @param color 圆的颜色
      * @param speed 玩家的移动速度，用每秒移动高度的百分比表示，因为每个浏览器的像素表示不一样
-     * @param is_me 判断当前角色是自己还是敌人
+     * @param character
+     * @param username
+     * @param photo
      */
-    constructor(playground, x, y, radius, color, speed, is_me) {
+    constructor(playground, x, y, radius, color, speed, character, username, photo) {
         super();
         this.playground = playground;
         this.x = x;
         this.y = y;
+        console.log("this.x = " + this.x, "this.y = " + this.y)
         this.color = color;
         this.speed = speed;
-        this.is_me = is_me;
+        this.character = character;
+        this.username = username;
+        this.photo = photo;
         //玩家所处地图的画布
         this.ctx = this.playground.game_map.ctx;
         //x方向的速度,用于计算玩家的移动
@@ -346,16 +377,17 @@ class Particle extends AcGameObject {
         this.move_length = 0;
         this.radius = radius;
         //表示精度，误差在eps内就算0
-        this.eps = 0.1;
+        this.eps = 0.01;
         this.friction = 0.9;
         this.spent_time = 0;
         this.status = null;
         this.nouseX = 0;
         this.mouseY = 0;
-        if (this.is_me) {
+        if (this.character !== "robot") {
             this.img = new Image();
-            this.img.src = this.playground.root.settings.photo;
+            this.img.src = this.photo;
         }
+        console.log(this.img)
 
         this.$after_die = $(`<div class = "ac_game_die_animation"></div>`);
         this.cur_skill = null;
@@ -366,12 +398,12 @@ class Particle extends AcGameObject {
      * 只在第一帧执行
      */
     start() {
-        if (this.is_me) {
+        if (this.character === "me") {
             this.add_listening_events();
-        } else {
+        } else if (this.character === "robot") {
             //如果是敌人，则会随机一个目标位置
-            let tx = Math.random() * this.playground.width;
-            let ty = Math.random() * this.playground.height;
+            let tx = Math.random() * this.playground.width / this.playground.scale;
+            let ty = Math.random() * this.playground.height / this.playground.scale;
             this.move_to(tx, ty);
 
         }
@@ -383,11 +415,20 @@ class Particle extends AcGameObject {
     update() {
         //实现电脑玩家的自动攻击
         this.spent_time += this.timedelta / 1000;
+        this.update_AI();
+        this.update_attacked();
+        //每一帧都要渲染圆
+        this.render();
+    }
 
+    /**
+     *
+     */
+    update_AI() {
         if (Math.random() < gameParameters.AIs_attack_frequency) {
             let from_player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
             let to_player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
-            if (from_player === to_player || from_player.is_me || from_player.status == "die") {
+            if (from_player === to_player || from_player.character !== "robot" || from_player.status === "die") {
                 return;
             }
             //是否开启相互攻击
@@ -397,8 +438,8 @@ class Particle extends AcGameObject {
             //实现简单的移动预测
             let tx = to_player.x + to_player.speed * this.vx * this.timedelta / 1000 * 0.3;
             let ty = to_player.y + to_player.speed * this.vy * this.timedelta / 1000 * 0.3;
-            // from_player.shoot_fireball(tx, ty);
-            from_player.shoot_boss_fireball();
+            from_player.shoot_fireball(tx, ty);
+            // from_player.shoot_boss_fireball();
             //人机狂暴模式
             if (gameParameters.is_crazy && this.playground.players.length < gameParameters.crazy_min_number) {
                 for (let i = 0; i < 4; i++) {
@@ -407,14 +448,18 @@ class Particle extends AcGameObject {
                 }
             }
         }
+    }
+
+    update_attacked() {
         //实现击退动画
         if (this.damage_speed > gameParameters.damage_speed) {
             this.vx = this.vy = 0;
             this.move_length = 0;
             this.x += this.damage_x * this.damage_speed * this.timedelta / 1000;
             this.y += this.damage_y * this.damage_speed * this.timedelta / 1000;
+            // console.log("player在的地图"+this.playground.width,this.playground.height)
             //保证玩家不会被打出画面
-            if (this.x < this.radius || this.x > this.playground.width - this.radius || this.y < this.radius || this.y > this.playground.height - this.radius) {
+            if (this.x < this.radius || this.x > (this.playground.width / this.playground.scale) - this.radius || this.y < this.radius || this.y > (this.playground.height / this.playground.scale) - this.radius) {
                 this.damage_speed = 0;
             }
             this.damage_speed *= this.friction;
@@ -424,10 +469,10 @@ class Particle extends AcGameObject {
             if (this.move_length < this.eps) {
                 this.move_length = 0;
                 this.vx = this.vy = 0;
-                if (!this.is_me) {
+                if (this.character === "robot") {
                     //如果是电脑玩家，在到达目标位置的帧都随机一个新的目标位置
-                    let tx = Math.random() * this.playground.width;
-                    let ty = Math.random() * this.playground.height;
+                    let tx = Math.random() * this.playground.width / this.playground.scale;
+                    let ty = Math.random() * this.playground.height / this.playground.scale;
 
                     this.move_to(tx, ty);
                 }
@@ -439,12 +484,10 @@ class Particle extends AcGameObject {
 
                 this.x += this.vx * moved;
                 this.y += this.vy * moved;
+
                 this.move_length -= moved;
             }
         }
-
-        //每一帧都要渲染圆
-        this.render();
     }
 
     /**
@@ -452,20 +495,23 @@ class Particle extends AcGameObject {
      */
     render() {
         //渲染用户头像
-        if (this.is_me) {
+        let scale = this.playground.scale;
+        if (this.character !== "robot") {
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
             this.ctx.stroke();
             this.ctx.clip();
-            this.ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+            this.ctx.drawImage(this.img, (this.x - this.radius) * scale, (this.y - this.radius) * scale, this.radius * 2 * scale, this.radius * 2 * scale);
             this.ctx.restore();
+            // console.log("xrcg")
         } else {
             //渲染一个圆
             this.ctx.beginPath();
-            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
             this.ctx.fillStyle = this.color;
             this.ctx.fill();
+
         }
 
     }
@@ -476,20 +522,22 @@ class Particle extends AcGameObject {
      */
     add_listening_events() {
         let outer = this;
-        const rect = outer.ctx.canvas.getBoundingClientRect();
-
         //禁用鼠标右键点击显示菜单的事件
         this.playground.game_map.$canvas.on("contextmenu", function () {
             return false;
         });
         this.playground.game_map.$canvas.mousedown(function (e) {
-            //
+            const rect = outer.ctx.canvas.getBoundingClientRect();
             //e.which === 3，点击鼠标右键的事件
             //e.which === 1，点击鼠标左键的事件
             if (e.which === 3) {
+                console.log("this.x = " + outer.x, "this.y = " + outer.y, "this.demage_speed = " + outer.damage_speed)
+
                 // console.log(gameParameters.AIs_attack_frequency);
                 //每一次点击都要计算出当前点到点击位置的距离
-                outer.move_to(e.clientX - rect.left, e.clientY - rect.top);
+                let tx = (e.clientX - rect.left) / outer.playground.scale;
+                let ty = (e.clientY - rect.top) / outer.playground.scale;
+                outer.move_to(tx, ty);
 
             }
 
@@ -497,12 +545,13 @@ class Particle extends AcGameObject {
         });
         //监听键盘事件
         $(window).keydown(function (e) {
+            const rect = outer.ctx.canvas.getBoundingClientRect();
             if (e.which === 81) {  // q
                 outer.cur_skill = "fireball";
                 outer.playground.game_map.$canvas.mousemove(function (e) {
                     //只有当按下键盘选中技能后，点击鼠标才能释放技能
                     if (outer.cur_skill === "fireball" && outer.status != "die") {
-                        outer.shoot_fireball(e.clientX - rect.left, e.clientY - rect.top);
+                        outer.shoot_fireball((e.clientX - rect.left) / outer.playground.scale, (e.clientY - rect.top) / outer.playground.scale);
                     }
                     //在释放完技能后取消技能选中
                     outer.cur_skill = null;
@@ -520,28 +569,30 @@ class Particle extends AcGameObject {
      */
     shoot_fireball(tx, ty) {
         let x = this.x, y = this.y;
-        let radius = this.playground.height * gameParameters.fireball_size;
+        let radius = gameParameters.fireball_size;
         let angle = Math.atan2(ty - this.y, tx - this.x);
         let vx = Math.cos(angle), vy = Math.sin(angle);
-        let speed = this.playground.height * gameParameters.fire_speed;
-        let mone_length = this.radius * gameParameters.fireball_range;
-        if (!this.is_me) {
-            mone_length = this.radius * this.playground.height;
+        let speed = gameParameters.fire_speed;
+        let move_length = this.radius * gameParameters.AIs_fireball_range;
+        if (this.character !== "robot") {
+            move_length = this.radius * gameParameters.fireball_range;
         }
         //所有人必须在开局4秒后才能释放火球
         if (this.spent_time > gameParameters.calm_time) {
             this.playground.fireballs.push(
-                new FireBall(this.playground, this, x, y, radius, vx, vy, speed, mone_length, this.playground.height * gameParameters.fireball_damage, gameParameters.fireball_color)
+                new FireBall(this.playground, this, x, y, radius, vx, vy, speed, move_length, gameParameters.fireball_damage, gameParameters.fireball_color)
             )
         }
     }
 
-    shoot_boss_fireball(){
-        for (let i = 0; i <8 ; i++) {
-            let tx = this.x*Math.cos(Math.PI*i/4)+this.playground.width,ty = this.y *Math.sin(Math.PI*i/4)+this.playground.height;
-            this.shoot_fireball(tx,ty);
+    shoot_boss_fireball() {
+        for (let i = 0; i < 8; i++) {
+            let tx = this.x * Math.cos(Math.PI * i / 4) + this.playground.width / this.playground.scale,
+                ty = this.y * Math.sin(Math.PI * i / 4) + this.playground.height / this.playground.scale;
+            this.shoot_fireball(tx * -1, ty * -1);
             // console.log(tx,ty)
         }
+
     }
 
 
@@ -551,6 +602,7 @@ class Particle extends AcGameObject {
      * @param damage 技能的伤害
      */
     is_attacked(angle, damage) {
+        // console.log(this.playground.players)
         //实现被攻击后的粒子效果
         for (let i = 0; i < gameParameters.particle_number[0] + Math.random() * gameParameters.particle_number[1]; i++) {
             //这里参考了大佬的代码，比y总的传参更合理
@@ -558,10 +610,11 @@ class Particle extends AcGameObject {
         }
         //受到攻击的玩家，移速变快，体积变小
         this.radius -= damage;
-        this.speed = this.playground.height * gameParameters.player_speed_percent + (this.playground.height * gameParameters.players_size_percent - this.radius) * 2;
-        if (this.radius < gameParameters.dead_szie) {
+        // console.log("圆半径：" + this.radius, "伤害:" + damage)
+        this.speed = gameParameters.player_speed + (gameParameters.players_size - this.radius) * 2;
+        if (this.radius < this.eps) {
             this.status = "die";
-            if (this.is_me) {
+            if (this.character === "me") {
                 $("div.ac-game-playground").append(this.$after_die);
             }
             // this.playground.$playground.$("canvas").append(this.$after_die);
@@ -569,10 +622,11 @@ class Particle extends AcGameObject {
             return false;
 
         }
+
         //人数小于6时，游戏难度提升，人机攻速提升3倍
         if (gameParameters.is_crazy && this.playground.players.length < gameParameters.crazy_min_number) {
             gameParameters.AIs_attack_frequency = 1 / 60
-            if (!this.is_me) {
+            if (!this.character === "robot") {
                 this.vx *= 2
                 this.vy *= 2
             }
@@ -581,7 +635,9 @@ class Particle extends AcGameObject {
         //计算受到攻击后的击退方向
         this.damage_x = Math.cos(angle);
         this.damage_y = Math.sin(angle);
-        this.damage_speed = this.playground.height * 2 + (this.radius - this.playground.height * gameParameters.players_size_percent) * 50;
+
+        this.damage_speed = 1.5 + (this.radius - gameParameters.players_size);
+        console.log("击退距离"+this.damage_speed,"size:"+this.radius)
 
 
     }
@@ -613,6 +669,9 @@ class Particle extends AcGameObject {
     on_destroy() {
         for (let i = 0; i < this.playground.players.length; i++) {
             if (this.playground.players[i] === this) {
+
+                console.log("我被删了")
+
                 this.playground.players.splice(i, 1);
             }
         }
@@ -650,7 +709,7 @@ class FireBall extends AcGameObject {
         this.damage = damage;
         this.color = color;
         this.ctx = this.playground.game_map.ctx;
-        this.eps = 0.1;
+        this.eps = 0.01;
     }
 
     /**
@@ -664,44 +723,70 @@ class FireBall extends AcGameObject {
      * 每一帧都执行
      */
     update() {
+        if (this.check_is_collision()) return
+        //每一帧都刷新火球的位置
+        this.update_fireball();
+        //遍历所有玩家。所有非攻击者且与火球碰撞的玩家都被攻击
+        this.update_fireball_attacked();
+        // 实现火球碰撞后相互抵消, 将火球从AC_GAME_OBJECTS = [], 中删除
+        // this.fireball_offset();
+        this.render();
+    }
+
+    /**
+     * 检测两个火球是否碰撞
+     * @returns {boolean}
+     */
+    check_is_collision() {
         if (this.move_length < this.eps) {
             this.destroy();
             return false;
         }
-        //每一帧都刷新火球的位置
-        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
-        this.x += this.vx * moved;
-        this.y += this.vy * moved;
-        this.move_length -= moved;
-        //遍历所有玩家。所有非攻击者且与火球碰撞的玩家都被攻击
+    }
+
+    /**
+     * 实现火球击中后的效果
+     */
+    update_fireball_attacked() {
         for (let i = 0; i < this.playground.players.length; i++) {
             let player = this.playground.players[i];
             if (this.player !== player && this.is_collision(player)) {
                 this.attack(player);
             }
         }
-        //实现火球碰撞后相互抵消,将火球从AC_GAME_OBJECTS = [],中删除
-        // for (let i = 0; i < this.playground.fireballs.length; i++) {
-        //     let fireball = this.playground.fireballs[i];
-        //
-        //     if (fireball != this && this.is_collision(fireball)) {
-        //         this.destroy();
-        //         fireball.destroy();
-        //         break;
-        //     }
-        // }
-
-        this.render();
     }
 
+    /**
+     * 实现火球碰撞后相互抵消, 将火球从AC_GAME_OBJECTS = [], 中删除
+     */
+    fireball_offset() {
+        //实现火球碰撞后相互抵消, 将火球从AC_GAME_OBJECTS = [], 中删除
+        for (let i = 0; i < this.playground.fireballs.length; i++) {
+            let fireball = this.playground.fireballs[i];
+
+            if (fireball != this && this.is_collision(fireball)) {
+                this.destroy();
+                fireball.destroy();
+                break;
+            }
+        }
+    }
+
+    update_fireball() {
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
+        this.x += this.vx * moved;
+        this.y += this.vy * moved;
+        this.move_length -= moved;
+    }
 
     /**
      * 在每一帧渲染画面
      */
     render() {
         //渲染一个圆
+        let scale = this.playground.scale;
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
         //--------------------------------------------------------------
@@ -756,52 +841,91 @@ class FireBall extends AcGameObject {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class="ac-game-playground"></div>`);
-
-
-
         this.hide();
+        this.root.$ac_game.append(this.$playground);
         this.start();
 
     }
 
     start() {
+        let outer = this;
+        //$(window).resize()在浏览器窗口大小改变时调用
+        $(window).resize(function () {
+            outer.resize();
+        });
     }
 
-    show() {  // 打开playground界面
+    /**
+     * 实现统一大小的函数
+     */
+    resize() {
+        this.width = this.$playground.width();
+        this.height = this.$playground.height();
+        //统一游戏地图比例为16:9，若浏览器窗口比例不符，则按照窗口长宽中的较小者作为地图的长
+        let unit = Math.min(this.width / 16, this.height / 9);
+        this.width = unit * 16;
+        this.height = unit * 9;
+        //把地图的高度设为单位1
+        this.scale = this.height;
+        if (this.game_map) {
+            this.game_map.resize();
+            console.log("game_map的大小为："+this.game_map.width,this.game_map.height)
+        }
+    }
+
+
+    show(mode) {
+        // 打开playground界面
+        let outer = this;
         this.$playground.show();
+
         this.root.$ac_game.append(this.$playground);
         this.width = this.$playground.width();
         this.height = this.$playground.height();
         //创建GameMap对象
         this.game_map = new GameMap(this);
+        this.resize();
+
         //创建玩家对象
         this.players = [];
         this.fireballs = [];
-        this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * gameParameters.players_size_percent, "white", this.height * gameParameters.player_speed_percent, true));
-        //创建5个电脑玩家
-        for (let i = 0; i < gameParameters.AIs_number; i++) {
-            this.players.push(new Player(this, this.width / 2, this.height / 2, this.height * gameParameters.players_size_percent, this.get_random_color(), this.height * gameParameters.player_speed_percent, false));
+        //创建自己
+        this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, "white", 0.15, "me", this.root.settings.username, this.root.settings.photo));
+        //单人模式就生成ai
+        if (mode === "single mode") {
+            for (let i = 0; i < gameParameters.AIs_number; i++) {
+                // console.log("创建人机")
+                this.players.push(new Player(this, this.width / this.scale / 2, 0.5, gameParameters.players_size, this.get_random_color(), gameParameters.player_speed, "robot"));
+            }
+        } else if (mode === "multi mode") {
+            this.mps = new MultiPlayerSocket(this);
+            this.mps.uuid = this.players[0].uuid;
+            this.mps.ws.onopen = function () {
+                outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);
+            };
         }
+
+
     }
 
     hide() {  // 关闭playground界面
         this.$playground.hide();
     }
 
-    get_random_color(){
+    get_random_color() {
 
-        return gameParameters.color_select[Math.floor((Math.random()*gameParameters.color_select.length))];
+        return gameParameters.color_select[Math.floor((Math.random() * gameParameters.color_select.length))];
     }
 
     /**
      * 某玩家死亡调用的函数
      * @param player Player 对象
      */
-    player_is_killed(player){
+    player_is_killed(player) {
         for (let i = 0; i < this.players.length; i++) {
-            if (this.player[i]===player){
+            if (this.player[i] === player) {
                 player.destroy();
-                this.players.splice(i,1);
+                this.players.splice(i, 1);
                 break;
             }
         }

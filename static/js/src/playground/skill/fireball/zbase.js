@@ -27,7 +27,7 @@ class FireBall extends AcGameObject {
         this.damage = damage;
         this.color = color;
         this.ctx = this.playground.game_map.ctx;
-        this.eps = 0.1;
+        this.eps = 0.01;
     }
 
     /**
@@ -41,44 +41,70 @@ class FireBall extends AcGameObject {
      * 每一帧都执行
      */
     update() {
+        if (this.check_is_collision()) return
+        //每一帧都刷新火球的位置
+        this.update_fireball();
+        //遍历所有玩家。所有非攻击者且与火球碰撞的玩家都被攻击
+        this.update_fireball_attacked();
+        // 实现火球碰撞后相互抵消, 将火球从AC_GAME_OBJECTS = [], 中删除
+        // this.fireball_offset();
+        this.render();
+    }
+
+    /**
+     * 检测两个火球是否碰撞
+     * @returns {boolean}
+     */
+    check_is_collision() {
         if (this.move_length < this.eps) {
             this.destroy();
             return false;
         }
-        //每一帧都刷新火球的位置
-        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
-        this.x += this.vx * moved;
-        this.y += this.vy * moved;
-        this.move_length -= moved;
-        //遍历所有玩家。所有非攻击者且与火球碰撞的玩家都被攻击
+    }
+
+    /**
+     * 实现火球击中后的效果
+     */
+    update_fireball_attacked() {
         for (let i = 0; i < this.playground.players.length; i++) {
             let player = this.playground.players[i];
             if (this.player !== player && this.is_collision(player)) {
                 this.attack(player);
             }
         }
-        //实现火球碰撞后相互抵消,将火球从AC_GAME_OBJECTS = [],中删除
-        // for (let i = 0; i < this.playground.fireballs.length; i++) {
-        //     let fireball = this.playground.fireballs[i];
-        //
-        //     if (fireball != this && this.is_collision(fireball)) {
-        //         this.destroy();
-        //         fireball.destroy();
-        //         break;
-        //     }
-        // }
-
-        this.render();
     }
 
+    /**
+     * 实现火球碰撞后相互抵消, 将火球从AC_GAME_OBJECTS = [], 中删除
+     */
+    fireball_offset() {
+        //实现火球碰撞后相互抵消, 将火球从AC_GAME_OBJECTS = [], 中删除
+        for (let i = 0; i < this.playground.fireballs.length; i++) {
+            let fireball = this.playground.fireballs[i];
+
+            if (fireball != this && this.is_collision(fireball)) {
+                this.destroy();
+                fireball.destroy();
+                break;
+            }
+        }
+    }
+
+    update_fireball() {
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
+        this.x += this.vx * moved;
+        this.y += this.vy * moved;
+        this.move_length -= moved;
+    }
 
     /**
      * 在每一帧渲染画面
      */
     render() {
         //渲染一个圆
+        let scale = this.playground.scale;
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
         //--------------------------------------------------------------

@@ -9,10 +9,10 @@ var gameParameters = {
 //--------------playground/particle/zbase.js----------------
 
     //粒子效果的最大粒子半径/玩家半径的比值
-    "particle_size_percent": 0.4,
+    "particle_size": 0.4,
 
     //粒子速度/其玩家速度，的比值
-    "particle_speed_percent": 20,
+    "particle_speed": 20,
 
     //粒子移动距离参数Math.max(0.5, Math.random()) * player.radius * 4
     "particle_move_length": [0.5, 4],
@@ -37,7 +37,7 @@ var gameParameters = {
     "crazy_min_number":8,
 
     //最小击退速度
-    "damage_speed":10,
+    "damage_speed":1,
 
     //是否开启互相攻击
     "attack_eachother":false,
@@ -55,33 +55,34 @@ var gameParameters = {
     //最小为[0,1]，是无粒子
     "particle_number":[20,10],
 
+    "AIs_fireball_range": 100,
     //火球的攻击范围/自己的血量
-    "fireball_range" : 10,
+    "fireball_range" : 5,
 
-    //火球技能的伤害/画布高度
-    "fireball_damage": 0.01,
+    //火球技能的伤害
+    "fireball_damage": 0.002,
 
     //火球的颜色
     "fireball_color":"orange",
 
     //火球技能的伤害(被攻击后减移速的比例)
     "reduce_ratio": 0.8,
-
-    //玩家的死亡大小
-    "dead_szie": 10,
+    //
+    // //玩家的死亡大小
+    // "dead_szie": 10,
 
 
 
 
 //------------------------playground/zbase.js-------------------------
-    //玩家初始大小百分比(相对于浏览器的宽)
-    "players_size_percent": 0.05,
+    //玩家初始大小百分比
+    "players_size": 0.05,
 
     //玩家自己的颜色
     "self_color": "white",
 
     //玩家的移动速度，用每秒移动高度的百分比表示
-    "player_speed_percent": 0.15,
+    "player_speed": 0.15,
 
     //电脑玩家的数量
     "AIs_number": 15,
