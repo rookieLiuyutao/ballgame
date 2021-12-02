@@ -60,7 +60,7 @@ var gameParameters = {
     "fireball_range" : 5,
 
     //火球技能的伤害
-    "fireball_damage": 0.002,
+    "fireball_damage": 0.004,
 
     //火球的颜色
     "fireball_color":"orange",
@@ -88,8 +88,16 @@ var gameParameters = {
     "AIs_number": 15,
 
     //所有玩家的颜色列表
-    "color_select": ["#b3ffbc", "gree", "#e666ff", "#b4a4ca", "#ebd2b8", "#3c374a"]
+    "color_select": ["#b3ffbc", "gree", "#e666ff", "#b4a4ca", "#ebd2b8", "#3c374a"],
 //------------------------------------------------------------------------
+
+//    --------------playground/skill/fireball/zbase.js----------------
+
+    //是否开启火球碰撞后相互抵消机制
+    "fireball_offset" : false,
+
+    //是否开启回血机制
+    "bloodBack" : true
 }
 
 

@@ -32,6 +32,9 @@ class AcGameMenu {
         this.add_listening_events();
     }
 
+    /**
+     * 监听用户选择了什么模式
+     */
     add_listening_events() {
         let outer = this;
         this.$single_mode.click(function(){
@@ -41,7 +44,6 @@ class AcGameMenu {
         this.$multi_mode.click(function(){
             outer.hide();
             outer.root.playground.show("multi mode");
-            console.log("多人模式")
 
         });
         this.$settings.click(function(){

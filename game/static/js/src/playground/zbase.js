@@ -9,11 +9,7 @@ class AcGamePlayground {
     }
 
     start() {
-        let outer = this;
-        //$(window).resize()在浏览器窗口大小改变时调用
-        $(window).resize(function () {
-            outer.resize();
-        });
+        this.add_listening_events();
     }
 
     /**
@@ -30,24 +26,42 @@ class AcGamePlayground {
         this.scale = this.height;
         if (this.game_map) {
             this.game_map.resize();
-            console.log("game_map的大小为："+this.game_map.width,this.game_map.height)
+            console.log("game_map的大小为：" + this.game_map.width, this.game_map.height)
         }
     }
 
+    add_listening_events() {
+        let outer = this;
+        //$(window).resize()在浏览器窗口大小改变时调用
+        $(window).resize(function () {
+            outer.resize();
+        });
+    }
 
+    /**
+     * 根据模式打开对应界面
+     * @param mode
+     */
     show(mode) {
         // 打开playground界面
-        let outer = this;
         this.$playground.show();
-
         this.root.$ac_game.append(this.$playground);
         this.width = this.$playground.width();
         this.height = this.$playground.height();
         //创建GameMap对象
         this.game_map = new GameMap(this);
         this.resize();
+        this.create_player(mode);
 
+    }
+
+    /**
+     * 根据模式在地图中创建玩家
+     */
+    create_player(mode) {
         //创建玩家对象
+        let outer = this;
+
         this.players = [];
         this.fireballs = [];
         //创建自己
@@ -55,7 +69,6 @@ class AcGamePlayground {
         //单人模式就生成ai
         if (mode === "single mode") {
             for (let i = 0; i < gameParameters.AIs_number; i++) {
-                // console.log("创建人机")
                 this.players.push(new Player(this, this.width / this.scale / 2, 0.5, gameParameters.players_size, this.get_random_color(), gameParameters.player_speed, "robot"));
             }
         } else if (mode === "multi mode") {
@@ -65,8 +78,6 @@ class AcGamePlayground {
                 outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);
             };
         }
-
-
     }
 
     hide() {  // 关闭playground界面

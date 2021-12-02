@@ -47,7 +47,9 @@ class FireBall extends AcGameObject {
         //遍历所有玩家。所有非攻击者且与火球碰撞的玩家都被攻击
         this.update_fireball_attacked();
         // 实现火球碰撞后相互抵消, 将火球从AC_GAME_OBJECTS = [], 中删除
-        // this.fireball_offset();
+        if (gameParameters.fireball_offset) {
+            this.fireball_offset();
+        }
         this.render();
     }
 
@@ -127,9 +129,17 @@ class FireBall extends AcGameObject {
     attack(player) {
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
         //当你的火球击中其他玩家，自己会"回血"，即体积增大，但速度变慢
-        this.player.radius += this.damage / 2;
+        if (gameParameters.bloodBack) this.bloodBack();
         player.is_attacked(angle, this.damage);
         this.destroy();
+    }
+
+    /**
+     * 回血机制
+     */
+    bloodBack() {
+        //击中敌人的玩家回血
+        this.player.radius += this.damage / 2;
     }
 
 

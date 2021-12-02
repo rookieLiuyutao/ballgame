@@ -65,6 +65,10 @@ sudo redis-server /etc/redis/redis.conf
 uwsgi --ini scripts/uwsgi.ini
 ```
 
+启动`django_channels`服务
+```shell
+daphne -b 0.0.0.0 -p 5015 acapp.asgi:application
+```
 
 
 启动前请确保服务器开放`443`,`80`和`项目运行的`端口
