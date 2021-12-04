@@ -45,7 +45,12 @@ class FireBall extends AcGameObject {
         //每一帧都刷新火球的位置
         this.update_fireball();
         //遍历所有玩家。所有非攻击者且与火球碰撞的玩家都被攻击
-        this.update_fireball_attacked();
+
+        if (this.player.character !== "enemy") {
+            this.update_fireball_attacked();
+
+        }
+
         // 实现火球碰撞后相互抵消, 将火球从AC_GAME_OBJECTS = [], 中删除
         if (gameParameters.fireball_offset) {
             this.fireball_offset();
@@ -84,7 +89,7 @@ class FireBall extends AcGameObject {
         for (let i = 0; i < this.playground.fireballs.length; i++) {
             let fireball = this.playground.fireballs[i];
 
-            if (fireball != this && this.is_collision(fireball)) {
+            if (fireball !== this && this.is_collision(fireball)) {
                 this.destroy();
                 fireball.destroy();
                 break;
@@ -114,8 +119,8 @@ class FireBall extends AcGameObject {
 
     /**
      * 实现碰撞检测
-     * @param player
      * @returns {boolean}
+     * @param obj
      */
     is_collision(obj) {
         let dis = this.get_dist(this.x, this.y, obj.x, obj.y);
@@ -131,6 +136,12 @@ class FireBall extends AcGameObject {
         //当你的火球击中其他玩家，自己会"回血"，即体积增大，但速度变慢
         if (gameParameters.bloodBack) this.bloodBack();
         player.is_attacked(angle, this.damage);
+        if (this.playground.mode === "multi mode") {
+            console.log("打中了")
+            this.playground.mps.send_attack(player.uuid, player.x, player.y, angle, this.damage, this.uuid);
+        }
+
+
         this.destroy();
     }
 
@@ -145,7 +156,7 @@ class FireBall extends AcGameObject {
 
     /**
      * 计算2点间的距离
-     * @returns 两点间的直线距离
+     * @returns number
      */
     get_dist(x1, y1, x2, y2) {
         let dx = x1 - x2;

@@ -8,17 +8,13 @@ from django.core.cache import cache
 
 class MultiPlayer(AsyncWebsocketConsumer):
     # 主机与客户端建立连接时的函数
-    async def websocket_connect(self, message):
-
+    async def connect(self):
+        print("连接成功")
         await self.accept()
 
-    # 主机与客户端断开连接时的函数
-    async def websocket_disconnect(self, message):
-        await self.channel_layer.group_discard(self.room_name, self.channel_name)
-
     # 处理主机接收到的消息的函数
-    async def websocket_receive(self, message):
-        data = json.loads(message)
+    async def receive(self, text_data):
+        data = json.loads(text_data)
         event = data['event']
         # 每个事件交给不同函数处理
         if event == "create_player":
@@ -31,6 +27,10 @@ class MultiPlayer(AsyncWebsocketConsumer):
             await self.attack(data)
         elif event == "blink":
             await self.blink(data)
+
+    # 主机与客户端断开连接时的函数
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
     async def group_send_event(self, data):
         await self.send(text_data=json.dumps(data))
@@ -125,10 +125,10 @@ class MultiPlayer(AsyncWebsocketConsumer):
                 # type为处理这个消息的函数名，是默认必须写的
                 'type': "group_send_event",
                 # 以下为自定义发送的消息
-                'event': "shoot_fireball",
+                'event': "attack",
                 'uuid': data['uuid'],
-                'tx': data['tx'],
-                'ty': data['ty'],
+                'x': data['x'],
+                'y': data['y'],
                 'attacked_uuid': data['attacked_uuid'],
                 'angle': data['angle'],
                 'damage': data['damage'],
@@ -148,6 +148,5 @@ class MultiPlayer(AsyncWebsocketConsumer):
                 'ty': data['ty'],
             }
         )
-
 
 # 模板来源于官网：https://channels.readthedocs.io/en/stable/topics/consumers.html#websocketconsumer

@@ -51,6 +51,12 @@ class AcGamePlayground {
         //创建GameMap对象
         this.game_map = new GameMap(this);
         this.resize();
+
+        this.mode = mode;
+        this.state = "waiting";  // waiting -> fighting -> over
+        this.notice_board = new NoticeBoard(this);
+        this.player_count = 0;
+
         this.create_player(mode);
 
     }
