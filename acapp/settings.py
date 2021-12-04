@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 
+#配置文件使用官方文档：https://docs.djangoproject.com/en/3.2/ref/settings/#core-settings
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,7 +30,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['60.205.186.129', "app220.acapp.acwing.com.cn", "liuyutao.top"]
 
 # Application definition
-
+#配置项目所有的app
 INSTALLED_APPS = [
     'channels',
     'game.apps.GameConfig',
@@ -67,19 +69,19 @@ TEMPLATES = [
         },
     },
 ]
-
+#wsgi配置文件的路径
 WSGI_APPLICATION = 'acapp.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
+# 框架所用数据库的配置
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
+# 缓存的配置
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
@@ -143,6 +145,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
+            #缓存的地址
             "hosts": [("127.0.0.1", 6379)],
         },
     },
