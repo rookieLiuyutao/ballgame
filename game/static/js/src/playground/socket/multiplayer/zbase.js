@@ -65,4 +65,5 @@ class MultiPlayerSocket {
         player.uuid = uuid;
         this.playground.players.push(player);
     }
+
 }
