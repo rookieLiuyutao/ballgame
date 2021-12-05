@@ -37,13 +37,8 @@ class MultiPlayer(AsyncWebsocketConsumer):
 
     async def create_player(self, data):
         self.room_name = None
-        # 遍历所有房间，房间上限暂定为1000
-        for i in range(100000000):
-            name = "room-%d" % (i)
-            # 如果redis中之前没有这个房间，且这个房间未满3人
-            if not cache.has_key(name) or len(cache.get(name)) < settings.ROOM_CAPACITY:
-                self.room_name = name
-                break
+
+        await self.assign_room()
 
         if not self.room_name:
             return
@@ -52,17 +47,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
             # 在redis中创建一条房间数据{"房间号":[玩家uuid列表]}
             cache.set(self.room_name, [], 3600)  # 有效期1小时
 
-        # 官网对组的详解：https://channels.readthedocs.io/en/stable/topics/channel_layers.html#groups
-        # 将玩家以房间号分组
-        # 遍历当前房间中的所有玩家
-        for player in cache.get(self.room_name):
-            # 向每个客户端广播当前玩家信息
-            await self.send(text_data=json.dumps({
-                'event': "create_player",
-                'uuid': player['uuid'],
-                'username': player['username'],
-                'photo': player['photo'],
-            }))
+        await self.send_to_room_player()
 
         await self.channel_layer.group_add(self.room_name, self.channel_name)
 
@@ -74,6 +59,9 @@ class MultiPlayer(AsyncWebsocketConsumer):
         })
 
         cache.set(self.room_name, players, 3600)  # 有效期1小时
+        await self.network_room_player(data)
+
+    async def network_room_player(self, data):
         await self.channel_layer.group_send(
             self.room_name,
             {
@@ -86,6 +74,28 @@ class MultiPlayer(AsyncWebsocketConsumer):
                 'photo': data['photo'],
             }
         )
+
+    async def assign_room(self):
+        # 遍历所有房间，房间上限暂定为1000
+        for i in range(100000000):
+            name = "room-%d" % (i)
+            # 如果redis中之前没有这个房间，且这个房间未满3人
+            if not cache.has_key(name) or len(cache.get(name)) < settings.ROOM_CAPACITY:
+                self.room_name = name
+                return
+
+    async def send_to_room_player(self):
+        # 官网对组的详解：https://channels.readthedocs.io/en/stable/topics/channel_layers.html#groups
+        # 将玩家以房间号分组
+        # 遍历当前房间中的所有玩家
+        for player in cache.get(self.room_name):
+            # 向每个客户端广播当前玩家信息
+            await self.send(text_data=json.dumps({
+                'event': "create_player",
+                'uuid': player['uuid'],
+                'username': player['username'],
+                'photo': player['photo'],
+            }))
 
     async def move_to(self, data):
         await self.channel_layer.group_send(
