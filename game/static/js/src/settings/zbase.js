@@ -37,10 +37,17 @@ class Settings {
         <br>
         <div class="ac-game-settings-quick-login">
             <div class="ac-game-settings-quick-login-acwing">
-                <img width="30" src="https://app165.acapp.acwing.com.cn/static/image/settings/acwing_logo.png">
+                <img width="30" height="30" src="https://app165.acapp.acwing.com.cn/static/image/settings/acwing_logo.png">
                 <br>
                 <div>
-                    AcWing一键登录
+                    Acwing
+                </div>
+            </div>
+             <div class="ac-game-settings-quick-login-gitee">
+                <img width="30" height="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/gitee.png" >
+                <br>
+                <div>
+                    gitee
                 </div>
             </div>
 
@@ -83,13 +90,12 @@ class Settings {
                     AcWing一键登录
                 </div>
             </div>
-             <div class="ac-game-settings-quick-login-gitee">
+            <div class="ac-game-settings-quick-login-gitee">
                 <img width="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/gitee.png" >
                 <div>
                     gitee
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -153,7 +159,6 @@ class Settings {
             },
             //得到后端参数后执行的函数
             success: function (resp) {
-                console.log(resp);
                 if (resp.result === "success") {
                     outer.username = resp.username;
                     outer.photo = resp.photo;
@@ -167,7 +172,6 @@ class Settings {
                 }
             }
         });
-        console.log(outer.photo)
     }
 
     /**
@@ -214,6 +218,9 @@ class Settings {
         this.$gitee_login.click(function () {
             outer.gitee_login();
         });
+
+
+
     }
 
     /**
@@ -234,7 +241,7 @@ class Settings {
 
     gitee_login() {
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/acwing_info/web/apply_code/",
+            url: "https://app220.acapp.acwing.com.cn/settings/gitee_info/web/apply_code/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);

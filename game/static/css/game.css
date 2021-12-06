@@ -131,9 +131,12 @@
 
 .ac-game-settings-quick-login {
     display: flex;
-    justify-content: center;
+    justify-content: space-around;
     flex-direction: row;
     height: 7vh;
+    width: 100%;
+
+    align-content: center;
 }
 
 .ac-game-settings-item {
@@ -201,17 +204,19 @@
 }
 
 .ac-game-settings-quick-login-acwing {
-
     cursor: pointer;
     display: flex;
     flex-direction: column;
+
 }
+
 .ac-game-settings-quick-login-gitee {
-
     cursor: pointer;
     display: flex;
     flex-direction: column;
+
 }
+
 
 .ac-game-settings-quick-login-acwing > img {
     position: relative;
@@ -220,8 +225,19 @@
     transform: translate(-50%, -50%);
     cursor: pointer;
 }
+.ac-game-settings-quick-login-gitee > img {
+    position: relative;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+}
 
 .ac-game-settings-quick-login-acwing > div {
+    color: #ffffff;
+    font-size: 1vh;
+}
+.ac-game-settings-quick-login-gitee > div {
     color: #ffffff;
     font-size: 1vh;
 }

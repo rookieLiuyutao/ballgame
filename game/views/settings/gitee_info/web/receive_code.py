@@ -15,25 +15,29 @@ def receive_code(request):
     code = data.get('code')
     state = data.get('state')
     client_id = "62827cb3fecac327351cd1fcf405820124e9340f3e64dca2faf124724303b905"
-    redirect_uri = quote("https://app220.acapp.acwing.com.cn/settings/gitee/receive_code")
     client_secret = "529bef1d272fec9ff428a8e5d9e39aff57a4ad395f93ff1c7c6ce9c239fbd35c"
-    if not cache.has_key(state):
-        return redirect("index")
-    cache.delete(state)
+
+    redirect_uri = quote("https://app220.acapp.acwing.com.cn/settings/gitee_info/web/receive_code")
+    # if not cache.has_key(state):
+    #     return redirect("index")
+    # cache.delete(state)
 
     access_token_res = requests.post(
         "https://gitee.com/oauth/token?grant_type=authorization_code&code=%s&client_id=%s&redirect_uri=%s"
         "&client_secret=%s" % (
             code, client_id, redirect_uri, client_secret)).json()
+    print(access_token_res)
 
     access_token = access_token_res['access_token']
-
+    print(access_token_res)
     userinfo_res = requests.get("https://gitee.com/api/v5/user?access_token=%s" % access_token).json()
+    # print(userinfo_res)
 
     openid = str(userinfo_res['id'])
 
     players = Player.objects.filter(openid=openid)
-    if players.exists():  # 用户查找是否登录
+    # 如果该用户已存在，则无需重新获取信息，直接登录即可
+    if players.exists():
         login(request, players[0].user)
         return redirect("index")
 
