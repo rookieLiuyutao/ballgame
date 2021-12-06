@@ -1439,7 +1439,13 @@ class Settings {
                     gitee
                 </div>
             </div>
-
+            <div class="ac-game-settings-quick-login-github">
+                <img width="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/github.png" >
+                <br>
+                <div>
+                    github
+                </div>
+            </div>
         </div>
     </div>
     <div class="ac-game-settings-register">
@@ -1476,7 +1482,7 @@ class Settings {
             <div class="ac-game-settings-quick-login-acwing">
                 <img width="30" src="https://app165.acapp.acwing.com.cn/static/image/settings/acwing_logo.png" >
                 <div>
-                    AcWing一键登录
+                    AcWing
                 </div>
             </div>
             <div class="ac-game-settings-quick-login-gitee">
@@ -1485,12 +1491,19 @@ class Settings {
                     gitee
                 </div>
             </div>
+            <div class="ac-game-settings-quick-login-github">
+                <img width="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/github.png" >
+                <div>
+                    github
+                </div>
+            </div>
+            
         </div>
     </div>
 </div>
         `);
         //把登录界面加载到DOM树中
-        // this.root.$ac_game.append(this.$settings);
+        this.root.$ac_game.append(this.$settings);
         //找到登录窗口节点及其子树
         this.$login = this.$settings.find(".ac-game-settings-login");
         //找到登录窗口的输入用户名表单
@@ -1515,8 +1528,9 @@ class Settings {
         this.$register_login = this.$register.find(".ac-game-settings-option");
         this.$acwing_login = this.$settings.find('.ac-game-settings-quick-login-acwing img');
         this.$gitee_login = this.$settings.find('.ac-game-settings-quick-login-gitee img');
+        this.$github_login = this.$settings.find('.ac-game-settings-quick-login-github img');
         this.$register.hide();
-
+        console.log(this.$github_login)
         this.root.$ac_game.append(this.$settings);
 
         this.start();
@@ -1607,7 +1621,9 @@ class Settings {
         this.$gitee_login.click(function () {
             outer.gitee_login();
         });
-
+        this.$github_login.click(function () {
+            outer.github_login();
+        });
 
 
     }
@@ -1630,7 +1646,20 @@ class Settings {
 
     gitee_login() {
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/gitee_info/web/apply_code/",
+            url: "https://app220.acapp.acwing.com.cn/settings/gitee_info/apply_code/",
+            type: "GET",
+            success: function (resp) {
+                console.log(resp);
+                if (resp.result === "success") {
+                    window.location.replace(resp.apply_code_url);
+                }
+            }
+        });
+    }
+
+    github_login() {
+        $.ajax({
+            url: "https://app220.acapp.acwing.com.cn/settings/github_info/apply_code/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);
@@ -1681,7 +1710,6 @@ class Settings {
         let outer = this;
 
         this.$login_register.click(function () {
-            console.log("666")
             outer.open_register();
         });
         this.$login_submit.click(function () {

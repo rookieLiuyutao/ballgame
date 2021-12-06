@@ -13,5 +13,6 @@ urlpatterns = [
     path("register/", register, name="settings_register"),
     path("acwing_info/",include("game.urls.settings.acwing_info.index")),
     path("gitee_info/",include("game.urls.settings.gitee_info.index")),
+    path("github_info/",include("game.urls.settings.github_info.index")),
 ]
 

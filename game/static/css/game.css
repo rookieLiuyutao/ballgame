@@ -217,27 +217,48 @@
 
 }
 
+.ac-game-settings-quick-login-github {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
 
-.ac-game-settings-quick-login-acwing > img {
+}
+
+
+.ac-game-settings-quick-login-acwing>img {
     position: relative;
     top: 35%;
     left: 50%;
     transform: translate(-50%, -50%);
     cursor: pointer;
 }
-.ac-game-settings-quick-login-gitee > img {
+.ac-game-settings-quick-login-github>img {
     position: relative;
     top: 35%;
     left: 50%;
     transform: translate(-50%, -50%);
     cursor: pointer;
 }
+.ac-game-settings-quick-login-gitee>img {
+    position: relative;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+}
+
 
 .ac-game-settings-quick-login-acwing > div {
     color: #ffffff;
     font-size: 1vh;
 }
+
 .ac-game-settings-quick-login-gitee > div {
+    color: #ffffff;
+    font-size: 1vh;
+}
+
+.ac-game-settings-quick-login-github > div {
     color: #ffffff;
     font-size: 1vh;
 }
