@@ -11,6 +11,11 @@ class MultiPlayerSocket {
         this.receive();
     }
 
+    /**
+     * 通过每个物体的唯一id去找到对应的对象
+     * @param uuid
+     * @returns {null|*}
+     */
     get_player(uuid) {
         let players = this.playground.players;
         for (let i = 0; i < players.length; i++) {
@@ -22,7 +27,7 @@ class MultiPlayerSocket {
     }
 
     /**
-     * 接收主机发来请求
+     * 接收主机发来请求，并控制实现各种业务逻辑
      */
     receive() {
         let outer = this;

@@ -206,6 +206,12 @@
     display: flex;
     flex-direction: column;
 }
+.ac-game-settings-quick-login-gitee {
+
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
 
 .ac-game-settings-quick-login-acwing > img {
     position: relative;
