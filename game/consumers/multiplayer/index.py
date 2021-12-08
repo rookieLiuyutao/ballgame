@@ -7,15 +7,11 @@ from django.core.cache import cache
 # 这个类就相当于与所有客户端连接的主机
 
 class MultiPlayer(AsyncWebsocketConsumer):
-
-    # 主机与客户端建立连接时的函数
-    def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
-        self.room_name = None
-        self.ready_player = {}
+    room_name = None
+    ready_player = {}
 
     async def connect(self):
-        print("连接成功")
+        # print("连接成功")
         await self.accept()
 
     # 处理主机接收到的消息的函数
@@ -66,15 +62,16 @@ class MultiPlayer(AsyncWebsocketConsumer):
 
         cache.set(self.room_name, players, 3600)  # 有效期1小时
         for i in self.ready_player.keys():
-            await self.blink({
-                # type为处理这个消息的函数名，是默认必须写的
-                'type': "group_send_event",
-                'event': "blink",
-                'uuid': i,
-                'tx': self.ready_player.get(i)[0],
-                'ty': self.ready_player.get(i)[1],
+            if self.ready_player.get(i)[2] == self.room_name:
+                await self.blink({
+                    # type为处理这个消息的函数名，是默认必须写的
+                    'type': "group_send_event",
+                    'event': "blink",
+                    'uuid': i,
+                    'tx': self.ready_player.get(i)[0],
+                    'ty': self.ready_player.get(i)[1],
 
-            })
+                })
 
         await self.network_room_player(data)
 
@@ -129,8 +126,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
 
             }
         )
-        self.ready_player[data['uuid']] = [data['tx'], data['ty']]
-        print(self.ready_player)
+        self.ready_player[data['uuid']] = [data['tx'], data['ty'], self.room_name]
 
     async def shoot_fireball(self, data):
         await self.channel_layer.group_send(
