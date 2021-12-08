@@ -3,7 +3,8 @@ class GameMap extends AcGameObject {
         //super()等价于AcGameObject.prototype.constructor.call(this)
         super();
         this.playground = playground;
-        this.$canvas = $(`<canvas></canvas>`);
+        //让canvas可以监听输入事件
+        this.$canvas = $(`<canvas tabindex=0></canvas>`);
         this.ctx = this.$canvas[0].getContext('2d');
         this.ctx.canvas.width = this.playground.width;
         this.ctx.canvas.height = this.playground.height;
@@ -12,6 +13,8 @@ class GameMap extends AcGameObject {
     }
 
     start() {
+        //为了能够让canvas获取输入信息，我们要将其聚焦：
+        this.$canvas.focus();
     }
 
     resize() {

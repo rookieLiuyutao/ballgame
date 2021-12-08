@@ -230,12 +230,91 @@ let AC_GAME_ANIMATION = function (timestamp) {
 
 
 requestAnimationFrame(AC_GAME_ANIMATION);
+class ChatField {
+    constructor(playground) {
+        this.playground = playground;
+
+        this.$history = $(`<div class="ac-game-chat-field-history">历史记录</div>`);
+        this.$input = $(`<input type="text" class="ac-game-chat-field-input">`);
+
+        this.$history.hide();
+        this.$input.hide();
+
+        this.func_id = null;
+
+        this.playground.$playground.append(this.$history);
+        this.playground.$playground.append(this.$input);
+
+        this.start();
+    }
+
+    start() {
+        this.add_listening_events();
+    }
+
+    add_listening_events() {
+        let outer = this;
+        //为了让焦点在input中的时候也能监听到键盘事件
+        this.$input.keydown(function(e) {
+            if (e.which === 27) {  // ESC
+                outer.hide_input();
+                return false;
+            } else if (e.which === 13) {  // ENTER
+                let username = outer.playground.root.settings.username;
+                let text = outer.$input.val();
+                if (text) {
+                    outer.$input.val("");
+                    outer.add_message(username, text);
+                    outer.playground.mps.send_message(username, text);
+                }
+                return false;
+            }
+        });
+    }
+
+    render_message(message) {
+        return $(`<div>${message}</div>`);
+    }
+
+    add_message(username, text) {
+        this.show_history();
+        let message = `[${username}]${text}`;
+        this.$history.append(this.render_message(message));
+        this.$history.scrollTop(this.$history[0].scrollHeight);
+        console.log(this.$history)
+    }
+
+    show_history() {
+        let outer = this;
+        this.$history.fadeIn();
+
+        if (this.func_id) clearTimeout(this.func_id);
+
+        this.func_id = setTimeout(function() {
+            outer.$history.fadeOut();
+            outer.func_id = null;
+        }, 3000);
+    }
+
+    show_input() {
+        this.show_history();
+
+        this.$input.show();
+        this.$input.focus();
+    }
+
+    hide_input() {
+        this.$input.hide();
+        this.playground.game_map.$canvas.focus();
+    }
+}
 class GameMap extends AcGameObject {
     constructor(playground) {
         //super()等价于AcGameObject.prototype.constructor.call(this)
         super();
         this.playground = playground;
-        this.$canvas = $(`<canvas></canvas>`);
+        //让canvas可以监听输入事件
+        this.$canvas = $(`<canvas tabindex=0></canvas>`);
         this.ctx = this.$canvas[0].getContext('2d');
         this.ctx.canvas.width = this.playground.width;
         this.ctx.canvas.height = this.playground.height;
@@ -244,6 +323,8 @@ class GameMap extends AcGameObject {
     }
 
     start() {
+        //为了能够让canvas获取输入信息，我们要将其聚焦：
+        this.$canvas.focus();
     }
 
     resize() {
@@ -461,7 +542,7 @@ class Particle extends AcGameObject {
         this.playground.player_count++;
         this.playground.notice_board.write("已就绪：" + this.playground.player_count + "人");
 
-        if (this.playground.player_count >= 3   ) {
+        if (this.playground.player_count >= 3) {
             this.playground.state = "fighting";
             this.playground.notice_board.write("Fighting");
         }
@@ -677,11 +758,12 @@ class Particle extends AcGameObject {
 
     }
 
+    /**
+     * 监听所有鼠标操作
+     */
     game_mouse_operation() {
         let outer = this;
         this.playground.game_map.$canvas.mousedown(function (e) {
-            // if (outer.playground.state !== "fighting")
-            //     return false;
 
             const rect = outer.ctx.canvas.getBoundingClientRect();
             //e.which === 3，点击鼠标右键的事件
@@ -705,7 +787,22 @@ class Particle extends AcGameObject {
     game_keyboard_operation() {
         let outer = this;
         //监听键盘事件
-        $(window).keydown(function (e) {
+        this.playground.game_map.$canvas.keydown(function (e) {
+
+            if (e.which === 13) {  // enter
+                if (outer.playground.mode === "multi mode") {
+                    // 打开聊天框
+                    outer.playground.chat_field.show_input();
+                    return false;
+                }
+            } else if (e.which === 27) {  // esc
+                if (outer.playground.mode === "multi mode") {
+                    // 关闭聊天框
+                    outer.playground.chat_field.hide_input();
+                }
+            }
+
+
             if (outer.playground.state !== "fighting")
                 return true;
 
@@ -753,6 +850,23 @@ class Particle extends AcGameObject {
 
         return fireball;
     }
+
+    /**
+     * 添加一条消息
+     * @param message
+     * @returns {*|jQuery|HTMLElement}
+     */
+    render_message(message) {
+        return $(`<div>${message}</div>`);
+    }
+
+    add_message(username, text) {
+        this.show_history();
+        let message = `[${username}]${text}`;
+        this.$history.append(this.render_message(message));
+        this.$history.scrollTop(this.$history[0].scrollHeight);
+    }
+
 
     shoot_boss_fireball() {
         for (let i = 0; i < 8; i++) {
@@ -1134,7 +1248,6 @@ class FireBall extends AcGameObject {
         this.ws.onmessage = function (e) {
             let data = JSON.parse(e.data);
             let uuid = data.uuid;
-            // console.log(data)
             if (uuid === outer.uuid) return false;
 
             let event = data.event;
@@ -1148,6 +1261,8 @@ class FireBall extends AcGameObject {
                 outer.receive_attack(uuid, data.attacked_uuid, data.x, data.y, data.angle, data.damage, data.ball_uuid);
             } else if (event === "blink") {
                 outer.receive_blink(uuid, data.tx, data.ty);
+            } else if (event === "message") {
+                outer.receive_message(uuid, data.username, data.text);
             }
         }
     }
@@ -1224,7 +1339,6 @@ class FireBall extends AcGameObject {
         }));
     }
 
-
     receive_shoot_fireball(uuid, tx, ty, ball_uuid) {
         let attacker = this.get_player(uuid);
         if (attacker) {
@@ -1275,6 +1389,23 @@ class FireBall extends AcGameObject {
             player.blink(tx, ty);
         }
     }
+
+    send_message(username, text) {
+        let outer = this
+        this.ws.send(JSON.stringify(
+            {
+                'event': "message",
+                'uuid' : outer.uuid,
+                'username': username,
+                'text': text,
+            }
+        ))
+    }
+
+    receive_message(uuid, username, text) {
+        this.playground.chat_field.add_message(username, text);
+    }
+
 }
 class AcGamePlayground {
     constructor(root) {
@@ -1356,6 +1487,7 @@ class AcGamePlayground {
                 this.players.push(new Player(this, this.width / this.scale / 2, 0.5, gameParameters.players_size, this.get_random_color(), gameParameters.player_speed, "robot"));
             }
         } else if (mode === "multi mode") {
+            this.chat_field = new ChatField(this);
             this.mps = new MultiPlayerSocket(this);
             this.mps.uuid = this.players[0].uuid;
             this.mps.ws.onopen = function () {

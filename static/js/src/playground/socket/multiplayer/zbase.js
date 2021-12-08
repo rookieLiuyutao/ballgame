@@ -11,6 +11,11 @@ class MultiPlayerSocket {
         this.receive();
     }
 
+    /**
+     * 通过每个物体的唯一id去找到对应的对象
+     * @param uuid
+     * @returns {null|*}
+     */
     get_player(uuid) {
         let players = this.playground.players;
         for (let i = 0; i < players.length; i++) {
@@ -22,14 +27,13 @@ class MultiPlayerSocket {
     }
 
     /**
-     * 接收主机发来请求
+     * 接收主机发来请求，并控制实现各种业务逻辑
      */
     receive() {
         let outer = this;
         this.ws.onmessage = function (e) {
             let data = JSON.parse(e.data);
             let uuid = data.uuid;
-            // console.log(data)
             if (uuid === outer.uuid) return false;
 
             let event = data.event;
@@ -43,6 +47,8 @@ class MultiPlayerSocket {
                 outer.receive_attack(uuid, data.attacked_uuid, data.x, data.y, data.angle, data.damage, data.ball_uuid);
             } else if (event === "blink") {
                 outer.receive_blink(uuid, data.tx, data.ty);
+            } else if (event === "message") {
+                outer.receive_message(uuid, data.username, data.text);
             }
         }
     }
@@ -119,7 +125,6 @@ class MultiPlayerSocket {
         }));
     }
 
-
     receive_shoot_fireball(uuid, tx, ty, ball_uuid) {
         let attacker = this.get_player(uuid);
         if (attacker) {
@@ -170,4 +175,21 @@ class MultiPlayerSocket {
             player.blink(tx, ty);
         }
     }
+
+    send_message(username, text) {
+        let outer = this
+        this.ws.send(JSON.stringify(
+            {
+                'event': "message",
+                'uuid' : outer.uuid,
+                'username': username,
+                'text': text,
+            }
+        ))
+    }
+
+    receive_message(uuid, username, text) {
+        this.playground.chat_field.add_message(username, text);
+    }
+
 }
