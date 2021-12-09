@@ -68,12 +68,11 @@ class Particle extends AcGameObject {
      * 在每一帧渲染画面
      */
     render() {
-        let ctx_x = this.x - this.playground.cx, ctx_y = this.y - this.playground.cy; // 把虚拟地图中的坐标换算成canvas中的坐标
         //渲染一个圆
+
         let scale = this.playground.scale;
         this.ctx.beginPath();
-        this.ctx.arc(ctx_x, ctx_y, this.radius, 0, Math.PI * 2, false);
-        // this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
+        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
         //--------------------------------------------------------------
