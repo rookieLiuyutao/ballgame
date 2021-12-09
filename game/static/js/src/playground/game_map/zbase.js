@@ -15,7 +15,6 @@ class GameMap extends AcGameObject {
     start() {
         //为了能够让canvas获取输入信息，我们要将其聚焦：
         this.$canvas.focus();
-        this.generate_grid();
     }
 
     resize() {
@@ -24,26 +23,12 @@ class GameMap extends AcGameObject {
         this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
         console.log("playground的大小为：" + this.playground.width, this.playground.height)
-        console.log("canvas:" + this.ctx.canvas.width, this.ctx.canvas.height)
+        console.log("canvas:"+this.ctx.canvas.width, this.ctx.canvas.height)
 
     }
 
     update() {
         this.render();
-    }
-
-    generate_grid() {
-        let width = this.playground.big_map_width;
-        let height = this.playground.big_map_height;
-        let l = height * 0.1;
-        let nx = Math.ceil(width / l);
-        let ny = Math.ceil(height / l);
-        this.grids = [];
-        for (let i = 0; i < nx; i++) {
-            for (let j = 0; j < ny; j++) {
-                this.grids.push(new Grid(this.playground, this.ctx, i, j, l, "black"));
-            }
-        }
     }
 
     render() {
