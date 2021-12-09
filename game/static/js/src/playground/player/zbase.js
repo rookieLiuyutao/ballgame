@@ -359,10 +359,13 @@ class Player extends AcGameObject {
                 }
             } else if (e.which === 70) {
                 outer.cur_skill = "blink";
-                outer.blink(outer.mouseX, outer.mouseY);
-                if (outer.playground.mode === "multi mode") {
-                    outer.playground.mps.send_blink(outer.mouseX, outer.mouseY);
+                if (outer.blink_coldtime < outer.eps) {
+                    outer.blink(outer.mouseX, outer.mouseY);
+                    if (outer.playground.mode === "multi mode") {
+                        outer.playground.mps.send_blink(outer.mouseX, outer.mouseY);
+                    }
                 }
+
 
             }
         });
@@ -421,7 +424,9 @@ class Player extends AcGameObject {
 
     blink(tx, ty) {
         let d = this.get_dist(this.x, this.y, tx, ty);
-        d = Math.min(d, 0.8);
+        if (this.playground.state === "fighting") {
+            d = Math.min(d, 0.8);
+        }
         let angle = Math.atan2(ty - this.y, tx - this.x);
         this.x += d * Math.cos(angle);
         this.y += d * Math.sin(angle);
