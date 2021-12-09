@@ -72,8 +72,9 @@ class Player extends AcGameObject {
             this.add_listening_events();
         } else if (this.character === "robot") {
             //如果是敌人，则会随机一个目标位置
-            let tx = Math.random() * this.playground.width / this.playground.scale;
-            let ty = Math.random() * this.playground.height / this.playground.scale;
+            let tx = Math.random() * this.playground.big_map_width;
+            let ty = Math.random() * this.playground.big_map_height;
+
             this.move_to(tx, ty);
 
         }
@@ -92,6 +93,32 @@ class Player extends AcGameObject {
     }
 
 
+    get_tx_ty(me, target) {
+        // 解三角形
+        let tan_a = (target.y - me.y) / (target.x - me.x);
+        let tan_b = target.vy / target.vx;
+        let tan_a_minus_b = (tan_a - tan_b) / (1 + tan_a * tan_b);
+        let tan_alpha = -tan_a_minus_b;
+        let sin_alpha = tan_alpha / (Math.sqrt(1 + tan_alpha * tan_alpha));
+        let cos_alpha = Math.sqrt(1 - sin_alpha * sin_alpha);
+        let fireball_speed = this.get_fireball_speed();
+        let sin_beta = target.speed / fireball_speed * sin_alpha;
+        let cos_beta = Math.sqrt(1 - sin_beta * sin_beta);
+        let sin_alpha_plus_beta = sin_alpha * cos_beta + cos_alpha * sin_beta;
+        let d_me_target = Math.sqrt((me.x - target.x) * (me.x - target.x) + (me.y - target.y) * (me.y - target.y));
+        let target_moved = sin_beta * d_me_target / sin_alpha_plus_beta;
+        let t = target_moved / target.speed;
+        let tx = target.x + target.speed * target.vx * t;
+        let ty = target.y + target.speed * target.vy * t;
+        return {tx, ty}
+    }
+
+
+    re_calculate_cx_cy() {
+        this.playground.cx = this.x - 0.5 * this.playground.width;
+        this.playground.cy = this.y - 0.5 * this.playground.height;
+    }
+
     /**
      * 每一帧都执行
      */
@@ -104,6 +131,9 @@ class Player extends AcGameObject {
 
         this.update_AI();
         this.update_player_move();
+        if (this.character==="me") this.re_calculate_cx_cy(); // 如果是玩家，修改background的 (cx, cy)
+
+
         //每一帧都要渲染圆
         this.render();
     }
@@ -160,7 +190,7 @@ class Player extends AcGameObject {
         this.y += this.damage_y * this.damage_speed * this.timedelta / 1000;
         // console.log("player在的地图"+this.playground.width,this.playground.height)
         //保证玩家不会被打出画面
-        if (this.x < this.radius || this.x > (this.playground.width / this.playground.scale) - this.radius || this.y < this.radius || this.y > (this.playground.height / this.playground.scale) - this.radius) {
+        if (this.x < this.radius || this.x > (this.playground.big_map_width) - this.radius || this.y < this.radius || this.y > this.playground.big_map_height - this.radius) {
             this.damage_speed = 0;
         }
         this.damage_speed *= this.friction;
@@ -189,8 +219,9 @@ class Player extends AcGameObject {
         this.vx = this.vy = 0;
         if (this.character === "robot") {
             //如果是电脑玩家，在到达目标位置的帧都随机一个新的目标位置
-            let tx = Math.random() * this.playground.width / this.playground.scale;
-            let ty = Math.random() * this.playground.height / this.playground.scale;
+            let tx = Math.random() * this.playground.big_map_width;
+            let ty = Math.random() * this.playground.big_map_height;
+
             this.move_to(tx, ty);
         }
     }
@@ -207,6 +238,11 @@ class Player extends AcGameObject {
      * 在每一帧渲染画面
      */
     render() {
+        let ctx_x = this.x - this.playground.cx, ctx_y = this.y - this.playground.cy; // 把虚拟地图中的坐标换算成canvas中的坐标
+        if (ctx_x < -0.2 * this.playground.width || ctx_x > 1.2 * this.playground.width || ctx_y < -0.2 * this.playground.height || ctx_y > 1.2 * this.playground.height) {
+            return;
+        }
+
         //渲染用户头像
         if (this.character !== "robot") {
             this.render_photo();
@@ -222,13 +258,13 @@ class Player extends AcGameObject {
      * 渲染用户头像
      */
     render_photo() {
-        let scale = this.playground.scale;
+        let ctx_x = this.x - this.playground.cx, ctx_y = this.y - this.playground.cy; // 把虚拟地图中的坐标换算成canvas中的坐标
         this.ctx.save();
         this.ctx.beginPath();
-        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
+        this.ctx.arc(ctx_x, ctx_y, this.radius, 0, Math.PI * 2, false);
         this.ctx.stroke();
         this.ctx.clip();
-        this.ctx.drawImage(this.img, (this.x - this.radius) * scale, (this.y - this.radius) * scale, this.radius * 2 * scale, this.radius * 2 * scale);
+        this.ctx.drawImage(this.img, (ctx_x - this.radius), (ctx_y - this.radius), this.radius * 2, this.radius * 2);
         this.ctx.restore();
     }
 
@@ -237,30 +273,32 @@ class Player extends AcGameObject {
      */
     render_radius() {
         //渲染一个圆
-        let scale = this.playground.scale;
+        let ctx_x = this.x - this.playground.cx, ctx_y = this.y - this.playground.cy; // 把虚拟地图中的坐标换算成canvas中的坐标
+
         this.ctx.beginPath();
-        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
+        this.ctx.arc(ctx_x, ctx_y, this.radius, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
 
     render_skill_coldTime() {
+        let ctx_x = this.x - this.playground.cx, ctx_y = this.y - this.playground.cy; // 把虚拟地图中的坐标换算成canvas中的坐标
 
         let scale = this.playground.scale;
         let x = 1.5, y = 0.9, r = 0.04;
         this.ctx.save();
         this.ctx.beginPath();
-        this.ctx.arc(x * scale, y * scale, r * scale, 0, Math.PI * 2, false);
+        this.ctx.arc(ctx_x, ctx_y, r * scale, 0, Math.PI * 2, false);
         this.ctx.stroke();
         this.ctx.clip();
-        this.ctx.drawImage(this.fireball_img, (x - r) * scale, (y - r) * scale, r * 2 * scale, r * 2 * scale);
+        this.ctx.drawImage(this.fireball_img, (ctx_x - r) * scale, (ctx_y - r) * scale, r * 2 * scale, r * 2 * scale);
         this.ctx.restore();
 
         if (this.fireball_coldtime > 0) {
             this.ctx.beginPath();
-            this.ctx.moveTo(x * scale, y * scale);
-            this.ctx.arc(x * scale, y * scale, r * scale, 0 - Math.PI / 2, Math.PI * 2 * (1 - this.fireball_coldtime / 3) - Math.PI / 2, true);
-            this.ctx.lineTo(x * scale, y * scale);
+            this.ctx.moveTo(ctx_x * scale, ctx_y * scale);
+            this.ctx.arc(ctx_x * scale, ctx_y * scale, r * scale, 0 - Math.PI / 2, Math.PI * 2 * (1 - this.fireball_coldtime / 3) - Math.PI / 2, true);
+            this.ctx.lineTo(ctx_x * scale, ctx_y * scale);
             this.ctx.fillStyle = "rgba(0, 0, 255, 0.6)";
             this.ctx.fill();
         }
@@ -270,17 +308,17 @@ class Player extends AcGameObject {
         r = 0.04;
         this.ctx.save();
         this.ctx.beginPath();
-        this.ctx.arc(x * scale, y * scale, r * scale, 0, Math.PI * 2, false);
+        this.ctx.arc(ctx_x * scale, ctx_y * scale, r * scale, 0, Math.PI * 2, false);
         this.ctx.stroke();
         this.ctx.clip();
-        this.ctx.drawImage(this.blink_img, (x - r) * scale, (y - r) * scale, r * 2 * scale, r * 2 * scale);
+        this.ctx.drawImage(this.blink_img, (ctx_x - r) * scale, (ctx_y - r) * scale, r * 2 * scale, r * 2 * scale);
         this.ctx.restore();
 
         if (this.blink_coldtime > 0) {
             this.ctx.beginPath();
-            this.ctx.moveTo(x * scale, y * scale);
-            this.ctx.arc(x * scale, y * scale, r * scale, 0 - Math.PI / 2, Math.PI * 2 * (1 - this.blink_coldtime / 5) - Math.PI / 2, true);
-            this.ctx.lineTo(x * scale, y * scale);
+            this.ctx.moveTo(ctx_x * scale, ctx_y * scale);
+            this.ctx.arc(ctx_x * scale, ctx_y * scale, r * scale, 0 - Math.PI / 2, Math.PI * 2 * (1 - this.blink_coldtime / 5) - Math.PI / 2, true);
+            this.ctx.lineTo(ctx_x * scale, ctx_y * scale);
             this.ctx.fillStyle = "rgba(0, 0, 255, 0.6)";
             this.ctx.fill();
         }
@@ -311,11 +349,14 @@ class Player extends AcGameObject {
             //e.which === 3，点击鼠标右键的事件
             //e.which === 1，点击鼠标左键的事件
             outer.playground.game_map.$canvas.mousemove(function (e) {
-                outer.mouseX = (e.clientX - rect.left) / outer.playground.scale;
-                outer.mouseY = (e.clientY - rect.top) / outer.playground.scale;
+                outer.mouseX = (e.clientX - rect.left + outer.playground.cx) / outer.playground.scale;
+                outer.mouseY = (e.clientY - rect.top + outer.playground.cy) / outer.playground.scale;
             })
             outer.playground.game_map.$canvas.mousedown(function (e) {
                 if (e.which === 3) {
+                    if (outer.mouseX < 0 || outer.mouseX > outer.playground.big_map_width || outer.mouseY < 0 || outer.mouseY > outer.playground.big_map_height) {
+                        return
+                    }
                     outer.move_to(outer.mouseX, outer.mouseY);
                     if (outer.playground.mode === "multi mode") {
                         // console.log("发送了")
@@ -370,6 +411,7 @@ class Player extends AcGameObject {
             }
         });
     }
+
 
     /**
      * 创建一个飞行的火球技能

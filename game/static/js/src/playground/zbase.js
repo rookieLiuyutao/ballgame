@@ -51,6 +51,9 @@ class AcGamePlayground {
         //创建GameMap对象
         this.game_map = new GameMap(this);
         this.resize();
+        //定义大地图的宽高
+        this.big_map_width = this.width * 2;
+        this.big_map_height = this.height * 2;
 
         this.mode = mode;
         this.state = "waiting";  // waiting -> fighting -> over
@@ -75,6 +78,7 @@ class AcGamePlayground {
         //单人模式就生成ai
         if (mode === "single mode") {
             for (let i = 0; i < gameParameters.AIs_number; i++) {
+                let px = Math.random() * this.big_map_width, py = Math.random() * this.big_map_height;
                 this.players.push(new Player(this, this.width / this.scale / 2, 0.5, gameParameters.players_size, this.get_random_color(), gameParameters.player_speed, "robot"));
             }
         } else if (mode === "multi mode") {

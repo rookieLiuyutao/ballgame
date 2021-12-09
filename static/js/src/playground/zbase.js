@@ -24,9 +24,27 @@ class AcGamePlayground {
         this.height = unit * 9;
         //把地图的高度设为单位1
         this.scale = this.height;
-        if (this.game_map) {
-            this.game_map.resize();
-            console.log("game_map的大小为：" + this.game_map.width, this.game_map.height)
+        if (this.game_map) this.game_map.resize();
+        if (this.mini_map) this.mini_map.resize();
+        if (this.chat_field) this.chat_field.resize();
+
+    }
+
+    /**
+     * 根据大地图坐标算出当前canvas坐标
+     * @param x
+     * @param y
+     */
+    re_calculate_cx_cy(x, y) {
+        this.cx = x - 0.5 * this.width / this.scale;
+        this.cy = y - 0.5 * this.height / this.scale;
+
+        let l = this.game_map.l;
+        if (this.focus_player) {
+            this.cx = Math.max(this.cx, -2 * l);
+            this.cx = Math.min(this.cx, this.virtual_map_width - (this.width / this.scale - 2 * l));
+            this.cy = Math.max(this.cy, -l);
+            this.cy = Math.min(this.cy, this.virtual_map_height - (this.height / this.scale - l));
         }
     }
 
@@ -46,8 +64,8 @@ class AcGamePlayground {
         // 打开playground界面
         this.$playground.show();
         this.root.$ac_game.append(this.$playground);
-        this.width = this.$playground.width();
-        this.height = this.$playground.height();
+        this.virtual_map_width = 3;
+        this.big_map_height = 3; // 正方形地图，方便画格子
         //创建GameMap对象
         this.game_map = new GameMap(this);
         this.resize();
@@ -70,12 +88,17 @@ class AcGamePlayground {
 
         this.players = [];
         this.fireballs = [];
+        // 根据玩家位置确定画布相对于虚拟地图的偏移量
+        this.cx = this.players[0].x - 0.5 * this.width / 2;
+        this.cy = this.players[0].y - 0.5 * this.height / 2;
+
         //创建自己
         this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, "white", 0.15, "me", this.root.settings.username, this.root.settings.photo));
         //单人模式就生成ai
         if (mode === "single mode") {
             for (let i = 0; i < gameParameters.AIs_number; i++) {
-                this.players.push(new Player(this, this.width / this.scale / 2, 0.5, gameParameters.players_size, this.get_random_color(), gameParameters.player_speed, "robot"));
+                let px = Math.random() * this.big_map_width, py = Math.random() * this.big_map_height;
+                this.players.push(new Player(this, px, py, gameParameters.players_size, this.get_random_color(), gameParameters.player_speed, "robot"));
             }
         } else if (mode === "multi mode") {
             this.chat_field = new ChatField(this);
@@ -85,6 +108,10 @@ class AcGamePlayground {
                 outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);
             };
         }
+        // 在地图和玩家都创建好后，创建小地图对象
+        this.mini_map = new MiniMap(this, this.game_map);
+        this.mini_map.resize();
+
     }
 
     hide() {  // 关闭playground界面
@@ -92,7 +119,6 @@ class AcGamePlayground {
     }
 
     get_random_color() {
-
         return gameParameters.color_select[Math.floor((Math.random() * gameParameters.color_select.length))];
     }
 
@@ -102,7 +128,7 @@ class AcGamePlayground {
      */
     player_is_killed(player) {
         for (let i = 0; i < this.players.length; i++) {
-            if (this.player[i] === player) {
+            if (this.players[i] === player) {
                 player.destroy();
                 this.players.splice(i, 1);
                 break;
