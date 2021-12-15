@@ -2,7 +2,7 @@ var gameParameters = {
 
 //--------------playground/game_map/zbase.js----------------
     //背景颜色和不透明度(rgba值)
-    "background_color": "rgba(0, 0, 0, 0.2)",
+    "background_color": "rgba(0,0,0.2)",
 //--------------------------------------------------------------
 
 
@@ -40,7 +40,7 @@ var gameParameters = {
     "damage_speed":1,
 
     //是否开启互相攻击
-    "attack_eachother":false,
+    "attack_eachother":true,
 
     //火球大小/画布高度
     "fireball_size":0.01,
@@ -78,11 +78,12 @@ var gameParameters = {
     //玩家初始大小百分比
     "players_size": 0.05,
 
+    "AI_speed":0.05,
     //玩家自己的颜色
     "self_color": "white",
 
     //玩家的移动速度，用每秒移动高度的百分比表示
-    "player_speed": 0.15,
+    "player_speed": 0.20,
 
     //电脑玩家的数量
     "AIs_number": 15,

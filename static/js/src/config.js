@@ -1,15 +1,15 @@
-var gameParameters = {
+const gameParameters = {
 
 //--------------playground/game_map/zbase.js----------------
     //背景颜色和不透明度(rgba值)
-    "background_color": "rgba(0, 0, 0, 0.2)",
+    "background_color": "rgba(255, 255, 255, 0.3)",
 //--------------------------------------------------------------
 
 
 //--------------playground/particle/zbase.js----------------
 
     //粒子效果的最大粒子半径/玩家半径的比值
-    "particle_size": 0.4,
+    "particle_size": 0.3,
 
     //粒子速度/其玩家速度，的比值
     "particle_speed": 20,

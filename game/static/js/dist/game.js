@@ -1938,7 +1938,9 @@ class Settings {
             }
         });
     }
-} export class AcGame {
+}
+
+export class AcGame {
      /**
       *
       * @param id

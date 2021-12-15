@@ -23,7 +23,7 @@ class ChatField {
     add_listening_events() {
         let outer = this;
         //为了让焦点在input中的时候也能监听到键盘事件
-        this.$input.keydown(function(e) {
+        this.$input.keydown(function (e) {
             if (e.which === 27) {  // ESC
                 outer.hide_input();
                 return false;
@@ -39,6 +39,40 @@ class ChatField {
             }
         });
     }
+
+    resize() {
+        this.width = this.playground.width * 0.2;
+        this.history_height = this.playground.height * 0.3;
+
+        this.margin_left = (this.playground.$playground.width() - this.playground.width) / 2 + 20;
+        this.history_top = (this.playground.$playground.height() - this.playground.height) / 2 + this.playground.height / 2;
+        this.input_top = this.history_top + 0.02 * this.playground.height + this.history_height;
+        this.$history.css({
+            "position": "absolute",
+            "width": this.width,
+            "height": this.history_height,
+            "left": this.margin_left,
+            "top": this.history_top,
+            "transform": "translate(-50 %, -50 %)",
+            "color": "white",
+            "font-size": "2vh",
+            "overflow": "auto",
+            "background-color": "rgba(0, 0, 0, 0.3)"
+        });
+
+        this.$input.css({
+            "position": "absolute",
+            "width": this.width,
+            "height": "3vh",
+            "left": this.margin_left,
+            "top": this.input_top,
+
+            "color": "white",
+            "font-size": "2vh",
+            "background-color": "rgba(0, 0, 0, 0.3)"
+        });
+    }
+
 
     render_message(message) {
         return $(`<div>${message}</div>`);
@@ -58,7 +92,7 @@ class ChatField {
 
         if (this.func_id) clearTimeout(this.func_id);
 
-        this.func_id = setTimeout(function() {
+        this.func_id = setTimeout(function () {
             outer.$history.fadeOut();
             outer.func_id = null;
         }, 3000);

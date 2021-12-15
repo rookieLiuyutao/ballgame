@@ -44,6 +44,9 @@ class Player extends AcGameObject {
         this.blink_coldtime = 5;
         this.mouseX = 0;
         this.mouseY = 0;
+        this.hp = 100;
+        this.max_hp = 100;
+
         if (this.character !== "robot") {
             this.img = new Image();
             this.img.src = this.photo;
@@ -67,6 +70,10 @@ class Player extends AcGameObject {
      * 只在第一帧执行
      */
     start() {
+        if (isNaN(this.playground.cx) || isNaN(this.playground.cy)) {
+            this.playground.cx = 0.5
+            this.playground.cy = 0.5
+        }
         this.check_room_status();
         if (this.character === "me") {
             this.add_listening_events();
@@ -101,6 +108,12 @@ class Player extends AcGameObject {
         if (this.character === "me" && this.playground.state === "fighting") {
             this.update_coldTime();
         }
+        if (this.character === "me" && this.playground.focus_player === this) {
+            // 如果是玩家，并且正在被聚焦，修改background的 (cx, cy)
+            this.playground.re_calculate_cx_cy(this.x, this.y);
+
+        }
+
 
         this.update_AI();
         this.update_player_move();
@@ -189,8 +202,8 @@ class Player extends AcGameObject {
         this.vx = this.vy = 0;
         if (this.character === "robot") {
             //如果是电脑玩家，在到达目标位置的帧都随机一个新的目标位置
-            let tx = Math.random() * this.playground.width / this.playground.scale;
-            let ty = Math.random() * this.playground.height / this.playground.scale;
+            let tx = Math.random() * this.playground.big_map_width;
+            let ty = Math.random() * this.playground.big_map_height;
             this.move_to(tx, ty);
         }
     }
@@ -222,13 +235,16 @@ class Player extends AcGameObject {
      * 渲染用户头像
      */
     render_photo() {
+
         let scale = this.playground.scale;
+        let ctx_x = this.x - this.playground.cx, ctx_y = this.y - this.playground.cy;
+        // console.log(this.x,this.y,this.playground.cx,this.playground.cy,ctx_x,ctx_y)
         this.ctx.save();
         this.ctx.beginPath();
-        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
+        this.ctx.arc(ctx_x * scale, ctx_y * scale, this.radius * scale, 0, Math.PI * 2, false);
         this.ctx.stroke();
         this.ctx.clip();
-        this.ctx.drawImage(this.img, (this.x - this.radius) * scale, (this.y - this.radius) * scale, this.radius * 2 * scale, this.radius * 2 * scale);
+        this.ctx.drawImage(this.img, (ctx_x - this.radius) * scale, (ctx_y - this.radius) * scale, this.radius * 2 * scale, this.radius * 2 * scale);
         this.ctx.restore();
     }
 
@@ -236,18 +252,21 @@ class Player extends AcGameObject {
      * 渲染一个圆
      */
     render_radius() {
+        let ctx_x = this.x - this.playground.cx, ctx_y = this.y - this.playground.cy
+
         //渲染一个圆
         let scale = this.playground.scale;
         this.ctx.beginPath();
-        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
+        this.ctx.arc(ctx_x * scale, ctx_y * scale, this.radius * scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
 
+
     render_skill_coldTime() {
 
         let scale = this.playground.scale;
-        let x = 1.5, y = 0.9, r = 0.04;
+        let x = 1.2, y = 0.9, r = 0.04;
         this.ctx.save();
         this.ctx.beginPath();
         this.ctx.arc(x * scale, y * scale, r * scale, 0, Math.PI * 2, false);
@@ -265,7 +284,7 @@ class Player extends AcGameObject {
             this.ctx.fill();
         }
 
-        x = 1.62;
+        x = 1.3;
         y = 0.9;
         r = 0.04;
         this.ctx.save();
@@ -286,116 +305,6 @@ class Player extends AcGameObject {
         }
     }
 
-
-    /**
-     * 鼠标点击的操作
-     */
-    add_listening_events() {
-        //禁用鼠标右键点击显示菜单的事件
-        this.playground.game_map.$canvas.on("contextmenu", function () {
-            return false;
-        });
-        this.game_mouse_operation();
-        this.game_keyboard_operation();
-
-    }
-
-    /**
-     * 监听所有鼠标操作
-     */
-    game_mouse_operation() {
-        let outer = this;
-        this.playground.game_map.$canvas.mousedown(function (e) {
-
-            const rect = outer.ctx.canvas.getBoundingClientRect();
-            //e.which === 3，点击鼠标右键的事件
-            //e.which === 1，点击鼠标左键的事件
-            outer.playground.game_map.$canvas.mousemove(function (e) {
-                outer.mouseX = (e.clientX - rect.left) / outer.playground.scale;
-                outer.mouseY = (e.clientY - rect.top) / outer.playground.scale;
-            })
-            outer.playground.game_map.$canvas.mousedown(function (e) {
-                if (e.which === 3) {
-                    outer.move_to(outer.mouseX, outer.mouseY);
-                    if (outer.playground.mode === "multi mode") {
-                        // console.log("发送了")
-                        outer.playground.mps.send_move_to(outer.mouseX, outer.mouseY);
-                    }
-                }
-            })
-        });
-    }
-
-    game_keyboard_operation() {
-        let outer = this;
-        //监听键盘事件
-        this.playground.game_map.$canvas.keydown(function (e) {
-
-            if (e.which === 13) {  // enter
-                if (outer.playground.mode === "multi mode") {
-                    // 打开聊天框
-                    outer.playground.chat_field.show_input();
-                    return false;
-                }
-            } else if (e.which === 27) {  // esc
-                if (outer.playground.mode === "multi mode") {
-                    // 关闭聊天框
-                    outer.playground.chat_field.hide_input();
-                }
-            }
-
-
-            if (outer.playground.state !== "fighting")
-                return true;
-
-            if (e.which === 81) {  // q
-                outer.cur_skill = "fireball";
-                if (outer.fireball_coldtime < outer.eps) {
-                    let fireball = outer.shoot_fireball(outer.mouseX, outer.mouseY);
-                    if (outer.playground.mode === "multi mode") {
-                        outer.playground.mps.send_shoot_fireball(outer.mouseX, outer.mouseY, fireball.uuid);
-                    }
-
-                }
-            } else if (e.which === 70) {
-                outer.cur_skill = "blink";
-                if (outer.blink_coldtime < outer.eps) {
-                    outer.blink(outer.mouseX, outer.mouseY);
-                    if (outer.playground.mode === "multi mode") {
-                        outer.playground.mps.send_blink(outer.mouseX, outer.mouseY);
-                    }
-                }
-
-
-            }
-        });
-    }
-
-    /**
-     * 创建一个飞行的火球技能
-     * @param tx 点击位置的横坐标
-     * @param ty 点击位置的纵坐标
-     */
-    shoot_fireball(tx, ty) {
-        let x = this.x, y = this.y;
-        let radius = gameParameters.fireball_size;
-        let angle = Math.atan2(ty - this.y, tx - this.x);
-        let vx = Math.cos(angle), vy = Math.sin(angle);
-        let speed = gameParameters.fire_speed;
-        let move_length = this.radius * gameParameters.AIs_fireball_range;
-        if (this.character !== "robot") {
-            move_length = this.radius * gameParameters.fireball_range;
-        }
-        let fireball = new FireBall(this.playground, this, x, y, radius, vx, vy, speed, move_length, gameParameters.fireball_damage, gameParameters.fireball_color)
-        //所有人必须在开局4秒后才能释放火球
-
-        this.fireballs.push(fireball)
-
-        this.fireball_coldtime = 1
-
-        return fireball;
-    }
-
     /**
      * 添加一条消息
      * @param message
@@ -413,6 +322,115 @@ class Player extends AcGameObject {
     }
 
 
+    /**
+     * 鼠标点击的操作
+     */
+    add_listening_events() {
+        //禁用鼠标右键点击显示菜单的事件
+        this.playground.game_map.$canvas.on("contextmenu", function () {
+            return false;
+        });
+        let outer = this;
+        //e.which === 3，点击鼠标右键的事件
+        //e.which === 1，点击鼠标左键的事件
+        outer.playground.game_map.$canvas.mousemove(function (e) {
+            const rect = outer.ctx.canvas.getBoundingClientRect();
+            //不能修改公共变量mouesX，mouesY,否则会导致坐标混乱
+            outer.mouseX = (e.clientX - rect.left) / outer.playground.scale;
+            outer.mouseY = (e.clientY - rect.top) / outer.playground.scale;
+        })
+        outer.playground.game_map.$canvas.mousedown(function (e) {
+            if (e.which === 3) {
+                //Element.getBoundingClientRect() 方法返回元素的大小及其相对于视口的位置。
+                //之前的bug就是因为公用了这个变量导致坐标偏移
+                const rect = outer.ctx.canvas.getBoundingClientRect();
+                outer.mouseX = (e.clientX - rect.left) / outer.playground.scale;
+                outer.mouseY = (e.clientY - rect.top) / outer.playground.scale;
+
+                new ClickParticle(outer.playground, outer.mouseX, outer.mouseY, "rgb(255,236,61)");
+
+                let tx = outer.mouseX + outer.playground.cx;
+                let ty = outer.mouseY + outer.playground.cy;
+                outer.move_to(tx, ty);
+                if (outer.playground.mode === "multi mode") {
+
+                    outer.playground.mps.send_move_to(tx, ty);
+                }
+            }
+        })
+        this.playground.game_map.$canvas.keydown(function (e) {
+            if (e.which === 13) {  // enter
+                if (outer.playground.mode === "multi mode") {
+                    // 打开聊天框
+                    outer.playground.chat_field.show_input();
+                    return false;
+                }
+            } else if (e.which === 27) {  // esc
+                if (outer.playground.mode === "multi mode") {
+                    // 关闭聊天框
+                    outer.playground.chat_field.hide_input();
+                }
+            } else if (e.which === 32 || e.which === 49) { // 按1键或空格聚焦玩家
+                outer.playground.focus_player = outer;
+                outer.playground.re_calculate_cx_cy(outer.x, outer.y);
+                return false;
+            } else if (e.which === 81) {  // q
+                outer.cur_skill = "fireball";
+                if (outer.playground.state !== "fighting")
+                    return true;
+
+                if (outer.fireball_coldtime < outer.eps) {
+                    let tx = outer.mouseX + outer.playground.cx;
+                    let ty = outer.mouseY + outer.playground.cy;
+                    let fireball = outer.shoot_fireball(tx, ty);
+                    if (outer.playground.mode === "multi mode") {
+                        outer.playground.mps.send_shoot_fireball(tx, ty, fireball.uuid);
+                    }
+
+                }
+            } else if (e.which === 70) {
+                outer.cur_skill = "blink";
+                if (outer.blink_coldtime < outer.eps) {
+                    outer.blink(outer.mouseX, outer.mouseY);
+                    if (outer.playground.mode === "multi mode") {
+                        outer.playground.mps.send_blink(outer.mouseX, outer.mouseY);
+                        outer.playground.re_calculate_cx_cy(this.tx, this.ty);
+                    }
+                }
+
+
+            }
+        });
+
+    }
+
+
+    /**
+     * 创建一个飞行的火球技能
+     * @param tx 点击位置的横坐标
+     * @param ty 点击位置的纵坐标
+     */
+    shoot_fireball(tx, ty) {
+
+        let x = this.x, y = this.y;
+        let radius = gameParameters.fireball_size;
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        let vx = Math.cos(angle), vy = Math.sin(angle);
+        let speed = gameParameters.fire_speed;
+        let move_length = this.radius * gameParameters.AIs_fireball_range;
+        if (this.character !== "robot") {
+            move_length = this.radius * gameParameters.fireball_range;
+        }
+        let fireball = new FireBall(this.playground, this, x, y, radius, vx, vy, speed, move_length, gameParameters.fireball_damage, gameParameters.fireball_color)
+        //所有人必须在开局4秒后才能释放火球
+        this.fireballs.push(fireball)
+
+        this.fireball_coldtime = 1
+
+        return fireball;
+    }
+
+
     shoot_boss_fireball() {
         for (let i = 0; i < 8; i++) {
             let tx = this.x * Math.cos(Math.PI * i / 4) + this.playground.width / this.playground.scale,
@@ -423,6 +441,7 @@ class Player extends AcGameObject {
     }
 
     blink(tx, ty) {
+
         let d = this.get_dist(this.x, this.y, tx, ty);
         if (this.playground.state === "fighting") {
             d = Math.min(d, 0.8);
@@ -557,9 +576,11 @@ class Player extends AcGameObject {
 
     }
 
+
     on_destroy() {
         this.destroy_player();
     }
+
 
     destroy_player() {
         for (let i = 0; i < this.playground.players.length; i++) {
