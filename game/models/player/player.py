@@ -10,6 +10,8 @@ class Player(models.Model):
     #---------以下是player类自定义附加的其他属性-------
     #用户头像的图片链接
     photo = models.URLField(max_length=256,blank=True)
+    #用户的rank分，用于匹配
+    score = models.IntegerField(default=1500)
     #用于给acwing发送请求
     openid = models.CharField(default="", max_length=50, blank=True, null=True)
     #显示每个player的数据在后台的名字

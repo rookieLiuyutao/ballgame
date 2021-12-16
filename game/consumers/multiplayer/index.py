@@ -2,6 +2,14 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from django.conf import settings
 from django.core.cache import cache
+from thrift import Thrift
+from thrift.transport import TSocket
+from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol
+
+from match_system.src.match_server.match_service import Match
+from game.models.player.player import Player
+from channels.db import database_sync_to_async
 
 
 # 这个类就相当于与所有客户端连接的主机
@@ -37,82 +45,38 @@ class MultiPlayer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(self.room_name, self.channel_name)
 
     async def group_send_event(self, data):
+        if not self.room_name:
+            keys = cache.keys('*%s*' % self.uuid)
+            if keys:
+                self.room_name = keys[0]
         await self.send(text_data=json.dumps(data))
 
     async def create_player(self, data):
+        self.room_name = None
+        self.uuid = data['uuid']
+        # Make socket
+        transport = TSocket.TSocket('127.0.0.1', 9090)
+        # Buffering is critical. Raw sockets are very slow
+        transport = TTransport.TBufferedTransport(transport)
 
-        await self.assign_room()
+        # Wrap in a protocol
+        protocol = TBinaryProtocol.TBinaryProtocol(transport)
 
-        if not self.room_name:
-            return
+        # Create a client to use the protocol encoder
+        client = Match.Client(protocol)
 
-        if not cache.has_key(self.room_name):
-            # 在redis中创建一条房间数据{"房间号":[玩家uuid列表]}
-            cache.set(self.room_name, [], 3600)  # 有效期1小时
+        def db_get_player():
+            return Player.objects.get(user__username=data['username'])
 
-        await self.send_to_room_player()
+        player = await database_sync_to_async(db_get_player)()
 
-        await self.channel_layer.group_add(self.room_name, self.channel_name)
+        # Connect!
+        transport.open()
 
-        players = cache.get(self.room_name)
-        players.append({
-            'uuid': data['uuid'],
-            'username': data['username'],
-            'photo': data['photo'],
+        client.add_player(player.score, data['uuid'], data['username'], data['photo'], self.channel_name)
 
-        })
-
-        cache.set(self.room_name, players, 3600)  # 有效期1小时
-        for i in self.ready_player.keys():
-            if self.ready_player.get(i)[2] == self.room_name:
-                await self.blink({
-                    # type为处理这个消息的函数名，是默认必须写的
-                    'type': "group_send_event",
-                    'event': "blink",
-                    'uuid': i,
-                    'tx': self.ready_player.get(i)[0],
-                    'ty': self.ready_player.get(i)[1],
-
-                })
-
-        await self.network_room_player(data)
-
-    async def network_room_player(self, data):
-        await self.channel_layer.group_send(
-            self.room_name,
-            {
-                # type为处理这个消息的函数名，是默认必须写的
-                'type': "group_send_event",
-                # 以下为自定义发送的消息
-                'event': "create_player",
-                'uuid': data['uuid'],
-                'username': data['username'],
-                'photo': data['photo'],
-
-            }
-        )
-
-    async def assign_room(self):
-        # 遍历所有房间，房间上限暂定为1000
-        for i in range(100000000):
-            name = "room-%d" % (i)
-            # 如果redis中之前没有这个房间，且这个房间未满3人
-            if not cache.has_key(name) or len(cache.get(name)) < settings.ROOM_CAPACITY:
-                self.room_name = name
-                return
-
-    async def send_to_room_player(self):
-        # 官网对组的详解：https://channels.readthedocs.io/en/stable/topics/channel_layers.html#groups
-        # 将玩家以房间号分组
-        # 遍历当前房间中的所有玩家
-        for player in cache.get(self.room_name):
-            # 向每个客户端广播当前玩家信息
-            await self.send(text_data=json.dumps({
-                'event': "create_player",
-                'uuid': player['uuid'],
-                'username': player['username'],
-                'photo': player['photo'],
-            }))
+        # Close!
+        transport.close()
 
     async def move_to(self, data):
         await self.channel_layer.group_send(

@@ -6,7 +6,7 @@ class MiniMap extends AcGameObject {
         this.ctx = this.$canvas[0].getContext('2d');
         this.bg_color = "rgb(200,200,200,0.9)";
         this.bright_color = "rgba(247, 232, 200, 0.7)";
-        this.players = this.playground.players; // 
+        this.players = this.playground.players; //
         this.pos_x = this.playground.width - this.playground.height * 0.3;
         this.pos_y = this.playground.height * 0.7;
         this.width = this.playground.height * 0.3;
@@ -36,7 +36,6 @@ class MiniMap extends AcGameObject {
         this.margin_bottom = (this.playground.$playground.height() - this.playground.height) / 2;
 
         this.$canvas.css({
-            // "transform": "translate(-100%, 0%)",
             "position": "absolute",
             "right": this.margin_right,
             "bottom": this.margin_bottom
