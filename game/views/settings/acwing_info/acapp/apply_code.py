@@ -13,7 +13,7 @@ def get_state():
 
 def apply_code(request):
     appid = "220"
-    redirect_uri = quote("https://app220.acapp.acwing.com.cn/settings/acwing_info/acapp/receive_code/")
+    redirect_uri = quote("https://game.liuyutao666.top/settings/acwing_info/acapp/receive_code/")
     scope = "userinfo"
     state = get_state()
 

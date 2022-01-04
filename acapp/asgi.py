@@ -8,9 +8,10 @@ https://docs.djangoproject.com/en/3.2/howto/deployment/asgi/
 """
 
 import os
-
+#导入django支持
 import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'acapp.settings')
+#启动django
 django.setup()
 
 from channels.auth import AuthMiddlewareStack
@@ -18,6 +19,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 from game.routing import websocket_urlpatterns
 
+#引入channel_layer实现匹配服务器连接主机
 from channels.layers import get_channel_layer
 channel_layer = get_channel_layer()
 

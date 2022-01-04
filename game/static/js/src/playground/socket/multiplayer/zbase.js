@@ -2,7 +2,7 @@ class MultiPlayerSocket {
     constructor(playground) {
         this.playground = playground;
         //建立websocket连接
-        this.ws = new WebSocket("wss://app220.acapp.acwing.com.cn/wss/multiplayer/");
+        this.ws = new WebSocket("wss://game.liuyutao666.top/wss/multiplayer/");
         this.uuid = null;
         this.start();
     }

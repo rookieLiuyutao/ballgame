@@ -16,7 +16,7 @@ def receive_code(request):
     client_id = "62827cb3fecac327351cd1fcf405820124e9340f3e64dca2faf124724303b905"
     client_secret = "529bef1d272fec9ff428a8e5d9e39aff57a4ad395f93ff1c7c6ce9c239fbd35c"
 
-    redirect_uri = quote("https://app220.acapp.acwing.com.cn/settings/gitee_info/receive_code")
+    redirect_uri = quote("https://game.liuyutao666.top/settings/gitee_info/receive_code")
     # if not cache.has_key(state):
     #     return redirect("index")
     # cache.delete(state)

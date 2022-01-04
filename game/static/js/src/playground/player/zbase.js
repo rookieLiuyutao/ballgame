@@ -61,7 +61,7 @@ class Player extends AcGameObject {
             this.blink_img.src = "https://cdn.acwing.com/media/article/image/2021/12/02/1_daccabdc53-blink.png";
         }
 
-        this.$after_die = $(`<div class = "ac_game_die_animation"></div>`);
+        // this.$after_die = $(`<div class = "ac_game_die_animation"></div>`);
         this.cur_skill = null;
 
     }
@@ -105,6 +105,7 @@ class Player extends AcGameObject {
     update() {
         //实现电脑玩家的自动攻击
         this.spent_time += this.timedelta / 1000;
+        this.update_win();
         if (this.character === "me" && this.playground.state === "fighting") {
             this.update_coldTime();
         }
@@ -359,17 +360,18 @@ class Player extends AcGameObject {
             }
         })
         this.playground.game_map.$canvas.keydown(function (e) {
+            let chat_is_show = true;
             if (e.which === 13) {  // enter
-                if (outer.playground.mode === "multi mode") {
+                chat_is_show = !chat_is_show;
+                if (outer.playground.mode === "multi mode" && !chat_is_show) {
                     // 打开聊天框
                     outer.playground.chat_field.show_input();
                     return false;
                 }
-            } else if (e.which === 27) {  // esc
-                if (outer.playground.mode === "multi mode") {
-                    // 关闭聊天框
-                    outer.playground.chat_field.hide_input();
-                }
+                // else if (outer.playground.mode === "multi mode" && chat_is_show) {
+                //     outer.playground.chat_field.hide_input();
+                //     return false;
+                // }
             } else if (e.which === 32 || e.which === 49) { // 按1键或空格聚焦玩家
                 outer.playground.focus_player = outer;
                 outer.playground.re_calculate_cx_cy(outer.x, outer.y);
@@ -521,9 +523,9 @@ class Player extends AcGameObject {
         this.status = "die";
         console.log(this.status)
 
-        if (this.character === "me") {
-            $("div.ac-game-playground").append(this.$after_die);
-        }
+        // if (this.character === "me") {
+        //     $("div.ac-game-playground").append(this.$after_die);
+        // }
         // this.playground.$playground.$("canvas").append(this.$after_die);
         this.destroy();
 
@@ -583,6 +585,13 @@ class Player extends AcGameObject {
 
 
     destroy_player() {
+        if (this.character === "me") {
+            if (this.playground.state === "fighting") {
+                this.playground.state = "over";
+                this.playground.score_board.lose();
+            }
+        }
+
         for (let i = 0; i < this.playground.players.length; i++) {
             if (this.playground.players[i] === this) {
                 this.playground.players.splice(i, 1);
@@ -599,6 +608,15 @@ class Player extends AcGameObject {
                 break;
             }
         }
+    }
+
+    update_win() {
+        if (this.playground.state === "fighting" && this.character === "me" && this.playground.players.length === 1) {
+            this.playground.state = "over";
+            this.status = "die";
+            this.playground.score_board.win();
+        }
+
     }
 }
 

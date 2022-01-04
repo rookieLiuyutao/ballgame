@@ -29,16 +29,17 @@ class MultiPlayer(AsyncWebsocketConsumer):
         # 每个事件交给不同函数处理
         if event == "create_player":
             await self.create_player(data)
-        elif event == "move_to":
-            await self.move_to(data)
-        elif event == "shoot_fireball":
-            await self.shoot_fireball(data)
-        elif event == "attack":
-            await self.attack(data)
-        elif event == "blink":
-            await self.blink(data)
-        elif event == "message":
-            await self.message(data)
+        if self.room_name:
+            if event == "move_to":
+                await self.move_to(data)
+            elif event == "shoot_fireball":
+                await self.shoot_fireball(data)
+            elif event == "attack":
+                await self.attack(data)
+            elif event == "blink":
+                await self.blink(data)
+            elif event == "message":
+                await self.message(data)
 
     # 主机与客户端断开连接时的函数
     async def disconnect(self, close_code):
@@ -54,6 +55,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
     async def create_player(self, data):
         self.room_name = None
         self.uuid = data['uuid']
+        # -----------------------------------------------------
         # Make socket
         transport = TSocket.TSocket('127.0.0.1', 9090)
         # Buffering is critical. Raw sockets are very slow
@@ -65,14 +67,15 @@ class MultiPlayer(AsyncWebsocketConsumer):
         # Create a client to use the protocol encoder
         client = Match.Client(protocol)
 
+        # Connect!
+        transport.open()
+
+        # -------------------------------以上是模板------------------------------------
         def db_get_player():
             return Player.objects.get(user__username=data['username'])
 
         player = await database_sync_to_async(db_get_player)()
-
-        # Connect!
-        transport.open()
-
+        # client.add_player()是thrift根据接口自动生成的函数
         client.add_player(player.score, data['uuid'], data['username'], data['photo'], self.channel_name)
 
         # Close!
@@ -92,7 +95,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
 
             }
         )
-        self.ready_player[data['uuid']] = [data['tx'], data['ty'], self.room_name]
+        # self.ready_player[data['uuid']] = [data['tx'], data['ty'], self.room_name]
 
     async def shoot_fireball(self, data):
         await self.channel_layer.group_send(
@@ -111,6 +114,37 @@ class MultiPlayer(AsyncWebsocketConsumer):
         )
 
     async def attack(self, data):
+        if not self.room_name:
+            return
+        players = cache.get(self.room_name)
+
+        if not players:
+            return
+
+        for player in players:
+            if player['uuid'] == data['attacked_uuid']:
+                player['hp'] -= 25
+
+        remain_cnt = 0
+        for player in players:
+            if player['hp'] > 0:
+                remain_cnt += 1
+
+        if remain_cnt > 1:
+            if self.room_name:
+                cache.set(self.room_name, players, 3600)
+        else:
+            def db_update_player_score(username, score):
+                player = Player.objects.get(user__username=username)
+                player.score += score
+                player.save()
+
+            for player in players:
+                if player['hp'] <= 0:
+                    await database_sync_to_async(db_update_player_score)(player['username'], -5)
+                else:
+                    await database_sync_to_async(db_update_player_score)(player['username'], 10)
+
         await self.channel_layer.group_send(
             self.room_name,
             {

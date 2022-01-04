@@ -7,7 +7,7 @@ from django.core.cache import cache
 
 def apply_code(request):
     client_id = "b58bb9ab6d25496b859e"
-    redirect_uri = quote("https://app220.acapp.acwing.com.cn/settings/github_info/receive_code")
+    redirect_uri = quote("https://game.liuyutao666.top/settings/github_info/receive_code")
 
 
     apply_code_url = "https://github.com/login/oauth/authorize"

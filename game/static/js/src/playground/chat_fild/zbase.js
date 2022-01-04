@@ -22,18 +22,24 @@ class ChatField {
 
     add_listening_events() {
         let outer = this;
-        //为了让焦点在input中的时候也能监听到键盘事件
+
         this.$input.keydown(function (e) {
             if (e.which === 27) {  // ESC
                 outer.hide_input();
                 return false;
             } else if (e.which === 13) {  // ENTER
-                let username = outer.playground.root.settings.username;
+                //获取输入区域输入的内容
                 let text = outer.$input.val();
                 if (text) {
+                    let username = outer.playground.root.settings.username;
+                    //先清空输入框
                     outer.$input.val("");
+                    //再把输入框中的消息展示到信息展示区
                     outer.add_message(username, text);
                     outer.playground.mps.send_message(username, text);
+                }else {
+                    outer.hide_input();
+                    return false;
                 }
                 return false;
             }
@@ -81,9 +87,11 @@ class ChatField {
     add_message(username, text) {
         this.show_history();
         let message = `[${username}]${text}`;
+        //给this.$history添加子元素
         this.$history.append(this.render_message(message));
+        //设置滚动条的移动距离
         this.$history.scrollTop(this.$history[0].scrollHeight);
-        console.log(this.$history)
+        //API用法请参考：https://www.jianshu.com/p/c59b2ccc963c
     }
 
     show_history() {

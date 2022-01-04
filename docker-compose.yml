@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  db:
+    image: mysql
+  redies:
+    image: redis:alpine
+  web:
+    build: .
+    command:
+      - sudo redis-server /etc/redis/redis.conf
+      - uwsgi --ini scripts/uwsgi.ini
+      - daphne -b 0.0.0.0 -p 5015 acapp.asgi:application
+
+    ports:
+      - "20020:80"
+      - "20021:443"
+      - "20022:5015"
+      - "2003:22"
+
+  nginx:
+    image: nginx
+
+  thrift:
+    image: thrift
