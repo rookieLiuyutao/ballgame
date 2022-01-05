@@ -217,14 +217,16 @@ class Player extends AcGameObject {
         this.blink_coldtime = Math.max(this.blink_coldtime, 0);
     }
 
+
+
     /**
      * 在每一帧渲染画面
      */
     render() {
         //渲染用户头像
-        if (this.character !== "robot") {
+        if (this.character !== "robot"&&this.status!=="die") {
             this.render_photo();
-        } else {
+        } else if (this.character === "robot"){
             this.render_radius();
         }
         if (this.character === "me" && this.playground.state === "fighting") {
@@ -521,13 +523,13 @@ class Player extends AcGameObject {
      */
     is_attacked_after_die() {
         this.status = "die";
-        console.log(this.status)
+        // console.log(this.status)
 
         // if (this.character === "me") {
         //     $("div.ac-game-playground").append(this.$after_die);
         // }
         // this.playground.$playground.$("canvas").append(this.$after_die);
-        this.destroy();
+        this.on_destroy();
 
     }
 
@@ -613,7 +615,7 @@ class Player extends AcGameObject {
     update_win() {
         if (this.playground.state === "fighting" && this.character === "me" && this.playground.players.length === 1) {
             this.playground.state = "over";
-            this.status = "die";
+            // this.status = "die";
             this.playground.score_board.win();
         }
 

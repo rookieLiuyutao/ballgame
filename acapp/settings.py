@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-+kh7(jt^6hc4=2_$@_e8$ku&uj_apz**8%%di=do=y0_gpe0in
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['60.205.186.129', "app220.acapp.acwing.com.cn", "liuyutao.top"]
+ALLOWED_HOSTS = ['60.205.186.129', "app220.acapp.acwing.com.cn", "game.liuyutao666.top"]
 
 # Application definition
 #配置项目所有的app

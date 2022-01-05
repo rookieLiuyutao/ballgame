@@ -57,10 +57,10 @@ var gameParameters = {
 
     "AIs_fireball_range": 100,
     //火球的攻击范围/自己的血量
-    "fireball_range" : 5,
+    "fireball_range" : 10,
 
     //火球技能的伤害
-    "fireball_damage": 0.004,
+    "fireball_damage": 0.01,
 
     //火球的颜色
     "fireball_color":"orange",

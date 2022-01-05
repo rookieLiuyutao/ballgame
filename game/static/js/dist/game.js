@@ -57,10 +57,10 @@ var gameParameters = {
 
     "AIs_fireball_range": 100,
     //火球的攻击范围/自己的血量
-    "fireball_range" : 5,
+    "fireball_range" : 10,
 
     //火球技能的伤害
-    "fireball_damage": 0.004,
+    "fireball_damage": 0.01,
 
     //火球的颜色
     "fireball_color":"orange",
@@ -183,6 +183,10 @@ class AcGameObject {
     update() {  // 每一帧均会执行一次
     }
 
+    late_update() {  // 在每一帧的最后执行一次
+    }
+
+
     on_destroy() {  // 在被销毁前执行一次
     }
 
@@ -224,8 +228,14 @@ let AC_GAME_ANIMATION = function (timestamp) {
             obj.update();
         }
     }
+    for (let i = 0; i < AC_GAME_OBJECTS.length; i++) {
+        let obj = AC_GAME_OBJECTS[i];
+        obj.late_update();
+    }
+
     last_timestamp = timestamp;
 
+    //无限循环，一直在渲染
     requestAnimationFrame(AC_GAME_ANIMATION);
 }
 
@@ -255,18 +265,24 @@ class ChatField {
 
     add_listening_events() {
         let outer = this;
-        //为了让焦点在input中的时候也能监听到键盘事件
+
         this.$input.keydown(function (e) {
             if (e.which === 27) {  // ESC
                 outer.hide_input();
                 return false;
             } else if (e.which === 13) {  // ENTER
-                let username = outer.playground.root.settings.username;
+                //获取输入区域输入的内容
                 let text = outer.$input.val();
                 if (text) {
+                    let username = outer.playground.root.settings.username;
+                    //先清空输入框
                     outer.$input.val("");
+                    //再把输入框中的消息展示到信息展示区
                     outer.add_message(username, text);
                     outer.playground.mps.send_message(username, text);
+                }else {
+                    outer.hide_input();
+                    return false;
                 }
                 return false;
             }
@@ -314,9 +330,11 @@ class ChatField {
     add_message(username, text) {
         this.show_history();
         let message = `[${username}]${text}`;
+        //给this.$history添加子元素
         this.$history.append(this.render_message(message));
+        //设置滚动条的移动距离
         this.$history.scrollTop(this.$history[0].scrollHeight);
-        console.log(this.$history)
+        //API用法请参考：https://www.jianshu.com/p/c59b2ccc963c
     }
 
     show_history() {
@@ -341,41 +359,6 @@ class ChatField {
     hide_input() {
         this.$input.hide();
         this.playground.game_map.$canvas.focus();
-    }
-}
-class Grid extends AcGameObject {
-    constructor(playground, ctx, i, j, l, stroke_color) {
-        super();
-        this.playground = playground;
-        this.ctx = ctx;
-        this.i = i;
-        this.j = j;
-        this.l = l;
-        this.stroke_color = stroke_color;
-        this.fill_color = "rgb(210, 222, 238)";
-        this.x = this.i * this.l;
-        this.y = this.j * this.l;
-    }
-
-    start() {}
-
-    update() {
-        this.render();
-    }
-
-    render() {
-        let ctx_x = this.x - this.playground.cx, ctx_y = this.y - this.playground.cy;
-        let cx = ctx_x + this.l * 0.5, cy = ctx_y + this.l * 0.5;
-        if (cx < -0.2 * this.playground.width || cx > 1.2 * this.playground.width || cy < -0.2 * this.playground.height || cy > 1.2 * this.playground.height) {
-            return;
-        }
-        this.ctx.save();
-        this.ctx.beginPath();
-        this.ctx.lineWidth = this.l * 0.03;
-        this.ctx.strokeStyle = this.stroke_color;
-        this.ctx.rect(ctx_x, ctx_y, this.l, this.l);
-        this.ctx.stroke();
-        this.ctx.restore();
     }
 }
 class GameMap extends AcGameObject {
@@ -431,7 +414,7 @@ class MiniMap extends AcGameObject {
         this.ctx = this.$canvas[0].getContext('2d');
         this.bg_color = "rgb(200,200,200,0.9)";
         this.bright_color = "rgba(247, 232, 200, 0.7)";
-        this.players = this.playground.players; // TODO: 这里是浅拷贝?
+        this.players = this.playground.players; //
         this.pos_x = this.playground.width - this.playground.height * 0.3;
         this.pos_y = this.playground.height * 0.7;
         this.width = this.playground.height * 0.3;
@@ -461,7 +444,6 @@ class MiniMap extends AcGameObject {
         this.margin_bottom = (this.playground.$playground.height() - this.playground.height) / 2;
 
         this.$canvas.css({
-            // "transform": "translate(-100%, 0%)",
             "position": "absolute",
             "right": this.margin_right,
             "bottom": this.margin_bottom
@@ -761,7 +743,7 @@ class Particle extends AcGameObject {
             this.blink_img.src = "https://cdn.acwing.com/media/article/image/2021/12/02/1_daccabdc53-blink.png";
         }
 
-        this.$after_die = $(`<div class = "ac_game_die_animation"></div>`);
+        // this.$after_die = $(`<div class = "ac_game_die_animation"></div>`);
         this.cur_skill = null;
 
     }
@@ -805,6 +787,7 @@ class Particle extends AcGameObject {
     update() {
         //实现电脑玩家的自动攻击
         this.spent_time += this.timedelta / 1000;
+        this.update_win();
         if (this.character === "me" && this.playground.state === "fighting") {
             this.update_coldTime();
         }
@@ -916,14 +899,16 @@ class Particle extends AcGameObject {
         this.blink_coldtime = Math.max(this.blink_coldtime, 0);
     }
 
+
+
     /**
      * 在每一帧渲染画面
      */
     render() {
         //渲染用户头像
-        if (this.character !== "robot") {
+        if (this.character !== "robot"&&this.status!=="die") {
             this.render_photo();
-        } else {
+        } else if (this.character === "robot"){
             this.render_radius();
         }
         if (this.character === "me" && this.playground.state === "fighting") {
@@ -1059,17 +1044,18 @@ class Particle extends AcGameObject {
             }
         })
         this.playground.game_map.$canvas.keydown(function (e) {
+            let chat_is_show = true;
             if (e.which === 13) {  // enter
-                if (outer.playground.mode === "multi mode") {
+                chat_is_show = !chat_is_show;
+                if (outer.playground.mode === "multi mode" && !chat_is_show) {
                     // 打开聊天框
                     outer.playground.chat_field.show_input();
                     return false;
                 }
-            } else if (e.which === 27) {  // esc
-                if (outer.playground.mode === "multi mode") {
-                    // 关闭聊天框
-                    outer.playground.chat_field.hide_input();
-                }
+                // else if (outer.playground.mode === "multi mode" && chat_is_show) {
+                //     outer.playground.chat_field.hide_input();
+                //     return false;
+                // }
             } else if (e.which === 32 || e.which === 49) { // 按1键或空格聚焦玩家
                 outer.playground.focus_player = outer;
                 outer.playground.re_calculate_cx_cy(outer.x, outer.y);
@@ -1094,7 +1080,7 @@ class Particle extends AcGameObject {
                     outer.blink(outer.mouseX, outer.mouseY);
                     if (outer.playground.mode === "multi mode") {
                         outer.playground.mps.send_blink(outer.mouseX, outer.mouseY);
-                        // outer.playground.re_calculate_cx_cy(this.tx, this.ty);
+                        outer.playground.re_calculate_cx_cy(this.tx, this.ty);
                     }
                 }
 
@@ -1219,13 +1205,13 @@ class Particle extends AcGameObject {
      */
     is_attacked_after_die() {
         this.status = "die";
-        console.log(this.status)
+        // console.log(this.status)
 
-        if (this.character === "me") {
-            $("div.ac-game-playground").append(this.$after_die);
-        }
+        // if (this.character === "me") {
+        //     $("div.ac-game-playground").append(this.$after_die);
+        // }
         // this.playground.$playground.$("canvas").append(this.$after_die);
-        this.destroy();
+        this.on_destroy();
 
     }
 
@@ -1283,6 +1269,13 @@ class Particle extends AcGameObject {
 
 
     destroy_player() {
+        if (this.character === "me") {
+            if (this.playground.state === "fighting") {
+                this.playground.state = "over";
+                this.playground.score_board.lose();
+            }
+        }
+
         for (let i = 0; i < this.playground.players.length; i++) {
             if (this.playground.players[i] === this) {
                 this.playground.players.splice(i, 1);
@@ -1300,8 +1293,76 @@ class Particle extends AcGameObject {
             }
         }
     }
+
+    update_win() {
+        if (this.playground.state === "fighting" && this.character === "me" && this.playground.players.length === 1) {
+            this.playground.state = "over";
+            // this.status = "die";
+            this.playground.score_board.win();
+        }
+
+    }
 }
 
+class ScoreBoard extends AcGameObject {
+    constructor(playground) {
+        super();
+        this.playground = playground;
+        this.ctx = this.playground.game_map.ctx;
+
+        this.state = null;  // win: 胜利，lose：失败
+
+        this.win_img = new Image();
+        this.win_img.src = "https://cdn.acwing.com/media/article/image/2021/12/17/1_8f58341a5e-win.png";
+
+        this.lose_img = new Image();
+        this.lose_img.src = "https://cdn.acwing.com/media/article/image/2021/12/17/1_9254b5f95e-lose.png";
+    }
+
+    start() {
+    }
+
+    add_listening_events() {
+        let outer = this;
+        let $canvas = this.playground.game_map.$canvas;
+
+        $canvas.on('click', function() {
+            outer.playground.hide();
+            outer.playground.root.menu.show();
+        });
+    }
+
+    win() {
+        this.state = "win";
+
+        let outer = this;
+        setTimeout(function() {
+            outer.add_listening_events();
+        }, 1000);
+    }
+
+    lose() {
+        this.state = "lose";
+
+        let outer = this;
+        setTimeout(function() {
+            outer.add_listening_events();
+        }, 1000);
+    }
+
+    late_update() {
+        this.render();
+    }
+
+    render() {
+        let len = this.playground.height / 2;
+        if (this.state === "win") {
+            this.ctx.drawImage(this.win_img, this.playground.width / 2 - len / 2, this.playground.height / 2 - len / 2, len, len);
+        } else if (this.state === "lose") {
+            this.ctx.drawImage(this.lose_img, this.playground.width / 2 - len / 2, this.playground.height / 2 - len / 2, len, len);
+        }
+    }
+}
 class FireBall extends AcGameObject {
     /**
      *
@@ -1446,7 +1507,7 @@ class FireBall extends AcGameObject {
     attack(player) {
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
         //当你的火球击中其他玩家，自己会"回血"，即体积增大，但速度变慢
-        if (gameParameters.bloodBack) this.bloodBack();
+        // if (gameParameters.bloodBack) this.bloodBack();
         player.is_attacked(angle, this.damage);
         if (this.playground.mode === "multi mode") {
             this.playground.mps.send_attack(player.uuid, player.x, player.y, angle, this.damage, this.uuid);
@@ -1489,7 +1550,7 @@ class FireBall extends AcGameObject {
     constructor(playground) {
         this.playground = playground;
         //建立websocket连接
-        this.ws = new WebSocket("wss://app220.acapp.acwing.com.cn/wss/multiplayer/");
+        this.ws = new WebSocket("wss://game.liuyutao666.top/wss/multiplayer/");
         this.uuid = null;
         this.start();
     }
@@ -1695,17 +1756,33 @@ class AcGamePlayground {
         this.start();
     }
 
+    create_uuid() {
+        let res = "";
+        for (let i = 0; i < 8; i++) {
+            let x = parseInt(Math.floor(Math.random() * 10));  // 返回[0, 1)之间的数
+            res += x;
+        }
+        return res;
+    }
+
     get_random_color() {
-        let colors = ['#00FFFF', '#00FF7F', '#8A2BE2', '#CD2990', '#7FFF00', '#FFDAB9', '#FF6437','#CD853F'];
+        let colors = ['#00FFFF', '#00FF7F', '#8A2BE2', '#CD2990', '#7FFF00', '#FFDAB9', '#FF6437', '#CD853F'];
         return colors[Math.floor(Math.random() * colors.length)];
     }
 
     start() {
         let outer = this;
-        $(window).resize(function() {
+        let uuid = this.create_uuid();
+        $(window).on(`resize.${uuid}`, function () {
             outer.resize();
-
         });
+
+        if (this.root.AcWingOS) {
+            this.root.AcWingOS.api.window.on_close(function () {
+                $(window).off(`resize.${uuid}`);
+            });
+        }
+
     }
 
     resize() {
@@ -1723,7 +1800,7 @@ class AcGamePlayground {
 
     re_calculate_cx_cy(x, y) {
         this.cx = x - 0.5 * this.width / this.scale;
-        this.cy = y - 0.5 * this.height/ this.scale;
+        this.cy = y - 0.5 * this.height / this.scale;
 
         let l = this.game_map.l;
         if (this.focus_player) {
@@ -1745,32 +1822,33 @@ class AcGamePlayground {
         // this.big_map_height = this.big_map_width; // 正方形地图，方便画格子
         // 虚拟地图大小改成相对大小
         this.big_map_width = 3;
-        this.big_map_height =3;
+        this.big_map_height = 3;
 
         this.game_map = new GameMap(this);
         this.notice_board = new NoticeBoard(this);
+        this.score_board = new ScoreBoard(this);
         this.player_count = 0;
 
         this.resize();
 
         // 加入玩家
 
-        this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, "white",gameParameters.player_speed , "me", this.root.settings.username, this.root.settings.photo));
+        this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, "white", gameParameters.player_speed, "me", this.root.settings.username, this.root.settings.photo));
         // 根据玩家位置确定画布相对于虚拟地图的偏移量
         this.re_calculate_cx_cy(this.players[0].x, this.players[0].y);
         this.focus_player = this.players[0];
 
         if (mode === "single mode") {
-            for (let i = 0; i < gameParameters.AIs_number; i ++ ) {
+            for (let i = 0; i < gameParameters.AIs_number; i++) {
                 let px = Math.random() * this.big_map_width, py = Math.random() * this.big_map_height;
                 this.players.push(new Player(this, px, py, 0.05, this.get_random_color(), gameParameters.AI_speed, "robot"));
             }
         } else if (mode === "multi mode") {
-            this.chat_field = new ChatField(this);
             this.mps = new MultiPlayerSocket(this);
+            this.chat_field = new ChatField(this);
 
             this.mps.uuid = this.players[0].uuid;
-            this.mps.ws.onopen = function() {
+            this.mps.ws.onopen = function () {
                 outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);
             };
         }
@@ -1780,9 +1858,32 @@ class AcGamePlayground {
         this.mini_map.resize();
     }
 
-    hide() {
+
+    hide() {  // 关闭playground界面
+        while (this.players && this.players.length > 0) {
+            this.players[0].destroy();
+        }
+
+        if (this.game_map) {
+            this.game_map.destroy();
+            this.game_map = null;
+        }
+
+        if (this.notice_board) {
+            this.notice_board.destroy();
+            this.notice_board = null;
+        }
+
+        if (this.score_board) {
+            this.score_board.destroy();
+            this.score_board = null;
+        }
+
+        this.$playground.empty();
+
         this.$playground.hide();
     }
+
 }
 class Settings {
     constructor(root) {
@@ -1952,7 +2053,7 @@ class Settings {
     getinfo_web() {
         let outer = this;
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/getinfo/",
+            url: "https://game.liuyutao666.top/settings/getinfo/",
             type: "GET",
             data: {
                 platform: outer.platform,
@@ -2030,7 +2131,7 @@ class Settings {
      */
     acwing_login() {
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/acwing_info/web/apply_code/",
+            url: "https://game.liuyutao666.top/settings/acwing_info/web/apply_code/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);
@@ -2043,7 +2144,7 @@ class Settings {
 
     gitee_login() {
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/gitee_info/apply_code/",
+            url: "https://game.liuyutao666.top/settings/gitee_info/apply_code/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);
@@ -2056,7 +2157,7 @@ class Settings {
 
     github_login() {
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/github_info/apply_code/",
+            url: "https://game.liuyutao666.top/settings/github_info/apply_code/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);
@@ -2089,7 +2190,7 @@ class Settings {
         let outer = this;
 
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/acwing_info/acapp/apply_code/",
+            url: "https://game.liuyutao666.top/settings/acwing_info/acapp/apply_code/",
             type: "GET",
             success: function (resp) {
                 if (resp.result === "success") {
@@ -2138,7 +2239,7 @@ class Settings {
         this.$login_error_message.empty();
 
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/login/",
+            url: "https://game.liuyutao666.top/settings/login/",
             type: "GET",
             data: {
                 username: username,
@@ -2166,7 +2267,7 @@ class Settings {
         this.$register_error_message.empty();
 
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/register/",
+            url: "https://game.liuyutao666.top/settings/register/",
             type: "GET",
             data: {
                 username: username,
@@ -2192,7 +2293,7 @@ class Settings {
         if (this.platform === "ACAPP") return false;
 
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/logout/",
+            url: "https://game.liuyutao666.top/settings/logout/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);

@@ -142,7 +142,7 @@ class FireBall extends AcGameObject {
     attack(player) {
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
         //当你的火球击中其他玩家，自己会"回血"，即体积增大，但速度变慢
-        if (gameParameters.bloodBack) this.bloodBack();
+        // if (gameParameters.bloodBack) this.bloodBack();
         player.is_attacked(angle, this.damage);
         if (this.playground.mode === "multi mode") {
             this.playground.mps.send_attack(player.uuid, player.x, player.y, angle, this.damage, this.uuid);
