@@ -43,7 +43,12 @@ pip install channels_redis
 sudo /etc/init.d/nginx start
 ```
 
-
+启动`thrift`服务
+```bash
+cd match_system/src/
+chmod +x main.py
+./main.py
+```
 
 启动`Redis`服务
 
