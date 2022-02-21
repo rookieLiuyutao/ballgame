@@ -2,7 +2,7 @@ var gameParameters = {
 
 //--------------playground/game_map/zbase.js----------------
     //背景颜色和不透明度(rgba值)
-    "background_color": "rgba(0,0,0.2)",
+    "background_color": "rgba(186,231,255)",
 //--------------------------------------------------------------
 
 
@@ -28,10 +28,10 @@ var gameParameters = {
 //--------------playground/player/zbase.js----------------
 
     //电脑玩家自动攻击的频率
-    "AIs_attack_frequency": 1/180,
+    "AIs_attack_frequency": 1/360,
 
     //是否开启狂暴模式
-    "is_crazy":true,
+    "is_crazy":false,
 
     //开启狂暴模式时的最小人数
     "crazy_min_number":8,
@@ -46,7 +46,7 @@ var gameParameters = {
     "fireball_size":0.01,
 
     //火球弹道速度/画布高度
-    "fire_speed": 0.5,
+    "fire_speed": 0.8,
 
     //开场后的冷静时间(多少秒内不能攻击)
     "calm_time": 4,

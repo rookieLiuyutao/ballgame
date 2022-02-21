@@ -2,7 +2,7 @@ var gameParameters = {
 
 //--------------playground/game_map/zbase.js----------------
     //背景颜色和不透明度(rgba值)
-    "background_color": "rgba(0,0,0.2)",
+    "background_color": "rgba(186,231,255)",
 //--------------------------------------------------------------
 
 
@@ -28,10 +28,10 @@ var gameParameters = {
 //--------------playground/player/zbase.js----------------
 
     //电脑玩家自动攻击的频率
-    "AIs_attack_frequency": 1/180,
+    "AIs_attack_frequency": 1/360,
 
     //是否开启狂暴模式
-    "is_crazy":true,
+    "is_crazy":false,
 
     //开启狂暴模式时的最小人数
     "crazy_min_number":8,
@@ -46,7 +46,7 @@ var gameParameters = {
     "fireball_size":0.01,
 
     //火球弹道速度/画布高度
-    "fire_speed": 0.5,
+    "fire_speed": 0.8,
 
     //开场后的冷静时间(多少秒内不能攻击)
     "calm_time": 4,
@@ -102,7 +102,164 @@ var gameParameters = {
 }
 
 
+class GlobalChatField {
+    constructor(menu) {
+        this.menu = menu;
+        this.$title = $(`<div class="global-chat-field-title">世界之窗</div>`)
+        this.$history = $(`<div class="global-chat-field-history"></div>`);
+        this.$input = $(`<input type="text" class="global-chat-field-input">`);
 
+
+        this.func_id = null;
+        this.menu.$menu.append(this.$title);
+        this.menu.$menu.append(this.$history);
+        this.menu.$menu.append(this.$input);
+
+        this.start();
+    }
+
+    start() {
+        this.add_listening_events();
+    }
+
+
+    add_listening_events() {
+        let outer = this;
+
+        this.$input.keydown(function (e) {
+            if (e.which === 13) {  // ENTER
+                let username = outer.menu.root.settings.username;
+                let text = outer.$input.val();
+                if (text) {
+                    outer.$input.val("");
+                    Date.prototype.format = function (fmt) {
+                        var o = {
+                            "M+": this.getMonth() + 1,                 //月份
+                            "d+": this.getDate(),                    //日
+                            "h+": this.getHours(),                   //小时
+                            "m+": this.getMinutes(),                 //分
+                            "s+": this.getSeconds(),                 //秒
+                            "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+                            "S": this.getMilliseconds()             //毫秒
+                        };
+                        if (/(y+)/.test(fmt)) {
+                            fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+                        }
+                        for (var k in o) {
+                            if (new RegExp("(" + k + ")").test(fmt)) {
+                                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+                            }
+                        }
+                        return fmt;
+                    }
+                    let time = new Date().format("yyyy-MM-dd hh:mm:ss");
+                    outer.add_message(username, time, text);
+                    outer.menu.gcs.send_message(username, time, text);
+                }
+                return false;
+            }
+        });
+    }
+
+    render_message(message, color) {
+        return $(`<div style="color:${color}">${message}</div>`);
+    }
+
+    escape(text) {
+        text = text.replace(/</g, "&lt");
+        text = text.replace(/>/g, "&gt");
+        return text;
+    }
+    add_message(username, time, text) {
+        text = this.escape(text);
+        let message = `[${username}][${time}]<br>${text}`;
+        let color = 'white';
+        if (username === this.menu.root.settings.username) {
+            color = 'green';
+        }
+        this.$history.append(this.render_message(message, color));
+        this.$history.scrollTop(this.$history[0].scrollHeight);
+    }
+
+}
+class MenuTop {
+    constructor(menu) {
+        this.menu = menu;
+        this.$menu_top = $(`
+            <div class="ac-game-menu-top">
+                
+                    <div class="ac-game-menu-scroll-word">
+                        <marquee>
+                            <span style="font-weight: bolder;font-size: 2.4vw;color: white;">${this.menu.root.settings.username} 欢迎您的到来!</span>
+                        </marquee>
+                    </div>
+            </div>`);
+        this.menu.$menu.append(this.$menu_top);
+
+        this.start();
+    }
+    start() {
+        this.add_listening_events();
+    }
+    hide() {
+        this.$menu_top.hide();
+    }
+    add_listening_events() {
+
+    }
+
+}
+class GlobalChatSocket {
+    constructor(menu) {
+        this.menu = menu;
+        this.ws = new WebSocket("wss://game.liuyutao666.top/wss/globalchat/");
+        this.start();
+    }
+    start() {
+        this.receive();
+    }
+    receive() {
+        let outer = this;
+        this.ws.onmessage = function (e) {
+            let data = JSON.parse(e.data);
+            let event = data['event'];
+            if (event === 'init') {
+                outer.receive_init(data['details']);
+            }
+            else if (event === 'message') {
+                outer.receive_message(data['username'], data['time'], data['message']);
+            }
+        };
+    }
+    send_init(username) {
+        this.ws.send(JSON.stringify({
+            'event': 'init',
+            'username': username,
+        }))
+    }
+    receive_init(details) {
+
+        for (let i = 0; i < details.length; i++) {
+            let detail = details[i];
+            let username = detail['username'];
+            let time = detail['time'];
+            let text = detail['message'];
+            this.menu.global_chat_field.add_message(username, time, text);
+        }
+    }
+    send_message(username, time, text) {
+        this.ws.send(JSON.stringify({
+            'event': 'send_message',
+            'username': username,
+            'time': time,
+            'message': text,
+        }))
+    }
+    receive_message(username, time, text) {
+        if (username !== this.menu.root.settings.username)
+            this.menu.global_chat_field.add_message(username, time, text);
+    }
+}
 class AcGameMenu {
     constructor(root) {
         this.root = root;
@@ -120,14 +277,27 @@ class AcGameMenu {
                   <div class="ac-game-menu-field-item ac-game-menu-field-item-settings">
                       退出
                   </div>
+                   <div class="ac-game-menu-field-item ac-game-menu-field-item-hexgl">
+                      HexGL
+                  </div>
               </div>
           </div>
         `);
         this.$menu.hide();
         this.root.$ac_game.append(this.$menu);
+        this.menu_top = new MenuTop(this);
         this.$single_mode = this.$menu.find('.ac-game-menu-field-item-single-mode');
         this.$multi_mode = this.$menu.find('.ac-game-menu-field-item-multi-mode');
         this.$settings = this.$menu.find('.ac-game-menu-field-item-settings');
+        this.$hexgl = this.$menu.find('.ac-game-menu-field-item-hexgl');
+
+        this.global_chat_field = new GlobalChatField(this);
+        this.gcs = new GlobalChatSocket(this);
+        let outer = this;
+        this.gcs.ws.onopen = function () {
+            outer.gcs.send_init(outer.root.settings.username);
+        }
+
 
         this.start();
     }
@@ -141,18 +311,22 @@ class AcGameMenu {
      */
     add_listening_events() {
         let outer = this;
-        this.$single_mode.click(function(){
+        this.$single_mode.click(function () {
             outer.hide();
             outer.root.playground.show("single mode");
         });
-        this.$multi_mode.click(function(){
+        this.$multi_mode.click(function () {
             outer.hide();
             outer.root.playground.show("multi mode");
 
         });
-        this.$settings.click(function(){
+        this.$settings.click(function () {
             outer.root.settings.logout_on_remote();
         });
+        this.$hexgl.click(function () {
+            window.location.href = "https://game.liuyutao666.top/static/HexGL/index.html";
+        });
+
     }
 
     show() {  // 显示menu界面
@@ -361,6 +535,132 @@ class ChatField {
         this.playground.game_map.$canvas.focus();
     }
 }
+class Grid extends AcGameObject {
+    constructor(playground, ctx, i, j, l, stroke_color) {
+        super();
+        this.playground = playground;
+        this.ctx = ctx;
+        this.i = i;
+        this.j = j;
+        this.l = l;
+        this.x = this.i * this.l;
+        this.y = this.j * this.l;
+
+        this.stroke_color = stroke_color;
+        this.has_grass = false; // 格子上有草否
+        this.is_poisoned = false; // 格子是否在毒圈
+        this.fill_color = "rgb(210, 222, 238)";
+
+        this.grass_color = "rgb(213, 198, 76)"; // grass yellow
+    }
+
+    start() {}
+
+    get_manhattan_dist(x1, y1, x2, y2) {
+        return Math.max(Math.abs(x1 - x2), Math.abs(y1 - y2));
+    }
+
+    check_poison(x, y) {
+        let nx = this.playground.game_map.nx;
+        let ny = this.playground.game_map.ny;
+        let d = Math.floor(this.playground.gametime_obj.gametime / 20); // 每20s毒向内扩散1格
+        if (Math.min(x, y) < d || Math.min(Math.abs(x - (nx - 1)), Math.abs(y - (ny - 1))) < d) {
+            return true;
+        }
+        return false;
+    }
+
+    update() {
+        if (this.playground.gametime_obj && !this.is_poisoned && this.check_poison(this.i, this.j)) {
+            this.poison = new Poison(this.playground, this);
+            this.is_poisoned = true;
+        }
+        this.render();
+    }
+
+    render() {
+        let scale = this.playground.scale;
+        let ctx_x = this.x - this.playground.cx, ctx_y = this.y - this.playground.cy;
+        let cx = ctx_x + this.l * 0.5, cy = ctx_y + this.l * 0.5; // grid的中心坐标
+        // 处于屏幕范围外，则不渲染
+        if (cx * scale < -0.2 * this.playground.width ||
+            cx * scale > 1.2 * this.playground.width ||
+            cy * scale < -0.2 * this.playground.height ||
+            cy * scale > 1.2 * this.playground.height) {
+            return;
+        }
+
+        this.render_grid(ctx_x, ctx_y, scale);
+        if (this.has_grass) {
+            let player = this.playground.players[0];
+            if (player.character === "me" && this.get_manhattan_dist(this.x + this.l / 2, this.y + this.l / 2, player.x, player.y) < 1.5 * this.l)
+                this.grass_color = "rgba(213, 198, 76, 0.3)";
+            else
+                this.grass_color = "rgb(213, 198, 76)";
+            this.render_grass(ctx_x, ctx_y, scale);
+        }
+    }
+
+    render_grid(ctx_x, ctx_y, scale) {
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.lineWidth = this.l * 0.03 * scale;
+        this.ctx.strokeStyle = this.stroke_color;
+        this.ctx.rect(ctx_x * scale, ctx_y * scale, this.l * scale, this.l * scale);
+        this.ctx.stroke();
+        this.ctx.restore();
+    }
+
+    render_grass(ctx_x, ctx_y, scale) {
+        this.ctx.save();
+        this.ctx.beginPath();
+        // this.ctx.lineWidth = this.l * 0.03 * scale;
+        this.ctx.lineWidth = 0;
+        this.ctx.rect(ctx_x * scale, ctx_y * scale, this.l * scale, this.l * scale);
+        this.ctx.fillStyle = this.grass_color;
+        this.ctx.fill();
+        this.ctx.restore();
+    }
+
+    on_destroy() {
+        if (this.poison) {
+            this.poison.destroy();
+            this.poison = null;
+        }
+    }
+}
+class Wall extends AcGameObject {
+    constructor(ctx, x, y, l, img_url) {
+        super();
+        this.ctx = ctx;
+        this.x = x;
+        this.y = y;
+        this.l = l;
+        this.ax = this.x * this.l;
+        this.ay = this.y * this.l;
+        this.img = new Image();
+        this.img.src = img_url;
+    }
+
+    start() {
+    }
+
+    update() {
+        this.render();
+    }
+
+    render() {
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.lineWidth = this.l * 0.03;
+        this.ctx.strokeStyle = "rgba(0,0,0,0)";
+        this.ctx.rect(this.ax, this.ay, this.l, this.l);
+        this.ctx.stroke();
+        this.ctx.clip();
+        this.ctx.drawImage(this.img, this.ax, this.ay, this.l, this.l);
+        this.ctx.restore();
+    }
+}
 class GameMap extends AcGameObject {
     constructor(playground) {
         //super()等价于AcGameObject.prototype.constructor.call(this)
@@ -373,7 +673,6 @@ class GameMap extends AcGameObject {
         this.ctx.canvas.height = this.playground.height;
         //这里的playground在定义时时任意值，但在调用时如果传入AcGamePlayground类就指这个类
         this.playground.$playground.append(this.$canvas);
-
         this.l = this.playground.big_map_height * 0.05;
         this.nx = Math.ceil(this.playground.big_map_width / this.l);
         this.ny = Math.ceil(this.playground.big_map_height / this.l)
@@ -385,6 +684,8 @@ class GameMap extends AcGameObject {
 
         //为了能够让canvas获取输入信息，我们要将其聚焦：
         this.$canvas.focus();
+        this.generate_grid();
+
     }
 
     resize() {
@@ -398,6 +699,29 @@ class GameMap extends AcGameObject {
 
     }
 
+    generate_grid() {
+        this.grids = [];
+        for (let i = 0; i < this.ny; i++) {
+            for (let j = 0; j < this.nx; j++) {
+                this.grids.push(new Grid(this.playground, this.ctx, j, i, this.l, "rgb(222, 237, 225)"));
+            }
+        }
+    }
+
+
+
+    generate_wall() {
+        let wall_pic = "https://s3.bmp.ovh/imgs/2021/11/837412e46f4f61a6.jpg";
+        this.walls = [];
+        for (let i = 0; i < this.ny; i++) {
+            for (let j = 0; j < this.nx; j++) {
+                if (Math.random() < 20 / (this.nx * this.ny)) {
+                    this.walls.push(new Wall(this.playground, this.ctx, j, i, this.l, wall_pic));
+                }
+            }
+        }
+    }
+
 
     render() {
         //改变背景的不透明度，以实现移动残影
@@ -405,6 +729,19 @@ class GameMap extends AcGameObject {
         //fillRect()绘制矩形的方法
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
+
+    on_destroy() {
+        for (let i = 0; i < this.grids.length; i++) {
+            this.grids[i].destroy();
+        }
+        this.grids = [];
+
+        for (let i = 0; i < this.eatable_skills.length; i++) {
+            this.eatable_skills[i].destroy();
+        }
+        this.eatable_skills = [];
+    }
+
 }
 class MiniMap extends AcGameObject {
     constructor(playground) {
@@ -908,7 +1245,7 @@ class Particle extends AcGameObject {
         //渲染用户头像
         if (this.character !== "robot"&&this.status!=="die") {
             this.render_photo();
-        } else if (this.character === "robot"){
+        } else if (this.character === "robot"&&this.status!=="die"){
             this.render_radius();
         }
         if (this.character === "me" && this.playground.state === "fighting") {

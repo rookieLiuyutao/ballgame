@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 from pathlib import Path
 import os
 
-#配置文件使用官方文档：https://docs.djangoproject.com/en/3.2/ref/settings/#core-settings
+# 配置文件使用官方文档：https://docs.djangoproject.com/en/3.2/ref/settings/#core-settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,10 +27,10 @@ SECRET_KEY = 'django-insecure-+kh7(jt^6hc4=2_$@_e8$ku&uj_apz**8%%di=do=y0_gpe0in
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['60.205.186.129', "app220.acapp.acwing.com.cn", "game.liuyutao666.top"]
+ALLOWED_HOSTS = ['60.205.186.129', "app220.acapp.acwing.com.cn", "game.liuyutao666.top", "game2.liuyutao666.top"]
 
 # Application definition
-#配置项目所有的app
+# 配置项目所有的app
 INSTALLED_APPS = [
     'channels',
     'game.apps.GameConfig',
@@ -69,7 +69,7 @@ TEMPLATES = [
         },
     },
 ]
-#wsgi配置文件的路径
+# wsgi配置文件的路径
 WSGI_APPLICATION = 'acapp.wsgi.application'
 
 # Database
@@ -138,14 +138,13 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
 ASGI_APPLICATION = 'acapp.asgi.application'
 
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            #缓存的地址
+            # 缓存的地址
             "hosts": [("127.0.0.1", 6379)],
         },
     },

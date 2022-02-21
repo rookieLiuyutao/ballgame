@@ -226,7 +226,7 @@ class Player extends AcGameObject {
         //渲染用户头像
         if (this.character !== "robot"&&this.status!=="die") {
             this.render_photo();
-        } else if (this.character === "robot"){
+        } else if (this.character === "robot"&&this.status!=="die"){
             this.render_radius();
         }
         if (this.character === "me" && this.playground.state === "fighting") {

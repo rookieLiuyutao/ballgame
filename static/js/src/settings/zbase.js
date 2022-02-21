@@ -166,7 +166,7 @@ class Settings {
     getinfo_web() {
         let outer = this;
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/getinfo/",
+            url: "https://game.liuyutao666.top/settings/getinfo/",
             type: "GET",
             data: {
                 platform: outer.platform,
@@ -244,7 +244,7 @@ class Settings {
      */
     acwing_login() {
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/acwing_info/web/apply_code/",
+            url: "https://game.liuyutao666.top/settings/acwing_info/web/apply_code/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);
@@ -257,7 +257,7 @@ class Settings {
 
     gitee_login() {
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/gitee_info/apply_code/",
+            url: "https://game.liuyutao666.top/settings/gitee_info/apply_code/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);
@@ -270,7 +270,7 @@ class Settings {
 
     github_login() {
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/github_info/apply_code/",
+            url: "https://game.liuyutao666.top/settings/github_info/apply_code/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);
@@ -303,7 +303,7 @@ class Settings {
         let outer = this;
 
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/acwing_info/acapp/apply_code/",
+            url: "https://game.liuyutao666.top/settings/acwing_info/acapp/apply_code/",
             type: "GET",
             success: function (resp) {
                 if (resp.result === "success") {
@@ -352,7 +352,7 @@ class Settings {
         this.$login_error_message.empty();
 
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/login/",
+            url: "https://game.liuyutao666.top/settings/login/",
             type: "GET",
             data: {
                 username: username,
@@ -380,7 +380,7 @@ class Settings {
         this.$register_error_message.empty();
 
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/register/",
+            url: "https://game.liuyutao666.top/settings/register/",
             type: "GET",
             data: {
                 username: username,
@@ -406,7 +406,7 @@ class Settings {
         if (this.platform === "ACAPP") return false;
 
         $.ajax({
-            url: "https://app220.acapp.acwing.com.cn/settings/logout/",
+            url: "https://game.liuyutao666.top/settings/logout/",
             type: "GET",
             success: function (resp) {
                 console.log(resp);
