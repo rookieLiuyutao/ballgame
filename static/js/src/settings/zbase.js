@@ -44,14 +44,14 @@ class Settings {
                 </div>
             </div>
              <div class="ac-game-settings-quick-login-gitee">
-                <img width="30" height="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/gitee.png" >
+                <img width="30" height="30" src="https://cdn.acwing.com/media/article/image/2022/03/27/82975_fe4ed5d3ad-gitee.png" >
                 <br>
                 <div>
                     gitee
                 </div>
             </div>
             <div class="ac-game-settings-quick-login-github">
-                <img width="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/github.png" >
+                <img width="30" src="https://cdn.acwing.com/media/article/image/2022/03/27/82975_055d5bf1ad-github.png" >
                 <br>
                 <div>
                     github
@@ -97,13 +97,13 @@ class Settings {
                 </div>
             </div>
             <div class="ac-game-settings-quick-login-gitee">
-                <img width="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/gitee.png" >
+                <img width="30" src="https://cdn.acwing.com/media/article/image/2022/03/27/82975_fe4ed5d3ad-gitee.png" >
                 <div>
                     gitee
                 </div>
             </div>
             <div class="ac-game-settings-quick-login-github">
-                <img width="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/github.png" >
+                <img width="30" src="https://cdn.acwing.com/media/article/image/2022/03/27/82975_055d5bf1ad-github.png" >
                 <div>
                     github
                 </div>
@@ -334,7 +334,7 @@ class Settings {
     add_listening_events_register() {
         let outer = this;
         this.$register_login.click(function () {
-            console.log('666')
+            // console.log('666')
             outer.open_login();
         });
         this.$register_submit.click(function () {

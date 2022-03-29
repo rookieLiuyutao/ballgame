@@ -52,7 +52,7 @@ class Pool:
         return dt <= a_max_dif and dt <= b_max_dif
 
     def match_success(self, ps):
-        print("Match Success: %s %s %s" % (ps[0].username, ps[1].username, ps[2].username))
+        # print("Match Success: %s %s %s" % (ps[0].username, ps[1].username, ps[2].username))
         room_name = "room-%s-%s-%s" % (ps[0].uuid, ps[1].uuid, ps[2].uuid)
         players = []
         for p in ps:
@@ -103,7 +103,7 @@ class Pool:
 class MatchHandler:
     #实现thrift接口中的函数
     def add_player(self, score, uuid, username, photo, channel_name):
-        print("Add Player: %s %d" % (username, score))
+        # print("Add Player: %s %d" % (username, score))
         player = Player(score, uuid, username, photo, channel_name)
         queue.put(player)
         return 0
@@ -111,6 +111,7 @@ class MatchHandler:
 
 def get_player_from_queue():
     try:
+        #put_nowait没有值的话不等，get_nowait取不到值也不等了，程序不会夯住，但是一定要做异常处理
         return queue.get_nowait()
     except:
         return None
@@ -141,6 +142,6 @@ if __name__ == '__main__':
 
     Thread(target=worker, daemon=True).start()
 
-    print('Starting the server...')
+    # print('Starting the server...')
     server.serve()
-    print('done.')
+    # print('done.')

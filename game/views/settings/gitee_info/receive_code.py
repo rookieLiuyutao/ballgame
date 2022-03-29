@@ -25,10 +25,11 @@ def receive_code(request):
         "https://gitee.com/oauth/token?grant_type=authorization_code&code=%s&client_id=%s&redirect_uri=%s"
         "&client_secret=%s" % (
             code, client_id, redirect_uri, client_secret)).json()
-    print(access_token_res)
+    # print(access_token_res)
 
     access_token = access_token_res['access_token']
-    print(access_token_res)
+    # print(access_token_res)
+    # 有马云传回的用户信息的json
     userinfo_res = requests.get("https://gitee.com/api/v5/user?access_token=%s" % access_token).json()
     # print(userinfo_res)
 

@@ -183,29 +183,67 @@ class GlobalChatField {
 
 }
 class MenuTop {
-    constructor(menu) {
-        this.menu = menu;
+    constructor(root) {
+        this.root = root
+        this.username = "";
         this.$menu_top = $(`
-            <div class="ac-game-menu-top">
-                
-                    <div class="ac-game-menu-scroll-word">
-                        <marquee>
-                            <span style="font-weight: bolder;font-size: 2.4vw;color: white;">${this.menu.root.settings.username} 欢迎您的到来!</span>
+            <div class="ac-game-menu-top" style="width: 100%;height:2.4vw ">
+<!--                <div class="ac-game-menu-top-user">-->
+<!--                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-expanded="false">-->
+<!--&lt;!&ndash;                    <img class="ac-game-menu-top-user-profile">&ndash;&gt;-->
+<!--                    <span class="ac-game-menu-top-user-item "></span>-->
+<!--                    </button>-->
+<!--                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">-->
+<!--                        <li class="dropdown-item ac-game-menu-top-user-username">个人信息</li>-->
+<!--                        <div class="dropdown-divider"></div>-->
+<!--                        <li class="dropdown-item ac-game-menu-top-user-settings" >设置</li>-->
+<!--                        <div class="dropdown-divider"></div>-->
+<!--                        <li class="dropdown-item ac-game-menu-top-user-logout" >退出</li>-->
+<!--                    </div>-->
+<!--                    <i class="bi bi-eye-fill"><span class='ac-game-menu-top-user-tourist-cnt'></span></i>-->
+<!--                </div>-->
+                <div>
+                        <marquee style="width: 100%;">
+                            <span class="ac-game-menu-scroll-word" style="font-weight: bolder;font-size: 2vw;color: white;">
+    
+                            </span>
                         </marquee>
-                    </div>
-            </div>`);
-        this.menu.$menu.append(this.$menu_top);
-
+                </div>
+            </div>
+        `);
+        this.$word = this.$menu_top.find(".ac-game-menu-scroll-word");
+        console.log(this.$word)
         this.start();
+
     }
+
     start() {
-        this.add_listening_events();
+        this.getinfo_web();
+        this.root.$menu.append(this.$menu_top);
     }
+
     hide() {
         this.$menu_top.hide();
     }
-    add_listening_events() {
 
+    getinfo_web() {
+        let outer = this;
+        $.ajax({
+            url: "https://game.liuyutao666.top/settings/getinfo/",
+            type: "GET",
+            data: {
+                platform: "WEB",
+            },
+            //得到后端参数后执行的函数
+            success: function (resp) {
+                if (resp.result === "success") {
+                    outer.$word.append($(`<span>
+                        <img src="${resp.photo}" height="40vh">
+                        ${resp.username}欢迎光临。游戏说明：右键移动，q键发射；匹配模式，3人自动匹配一局
+                    </span>`))
+                }
+            }
+        });
     }
 
 }
@@ -285,12 +323,11 @@ class AcGameMenu {
         `);
         this.$menu.hide();
         this.root.$ac_game.append(this.$menu);
-        this.menu_top = new MenuTop(this);
         this.$single_mode = this.$menu.find('.ac-game-menu-field-item-single-mode');
         this.$multi_mode = this.$menu.find('.ac-game-menu-field-item-multi-mode');
         this.$settings = this.$menu.find('.ac-game-menu-field-item-settings');
         this.$hexgl = this.$menu.find('.ac-game-menu-field-item-hexgl');
-
+        this.menu_top = new MenuTop(this);
         this.global_chat_field = new GlobalChatField(this);
         this.gcs = new GlobalChatSocket(this);
         let outer = this;
@@ -2268,14 +2305,14 @@ class Settings {
                 </div>
             </div>
              <div class="ac-game-settings-quick-login-gitee">
-                <img width="30" height="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/gitee.png" >
+                <img width="30" height="30" src="https://cdn.acwing.com/media/article/image/2022/03/27/82975_fe4ed5d3ad-gitee.png" >
                 <br>
                 <div>
                     gitee
                 </div>
             </div>
             <div class="ac-game-settings-quick-login-github">
-                <img width="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/github.png" >
+                <img width="30" src="https://cdn.acwing.com/media/article/image/2022/03/27/82975_055d5bf1ad-github.png" >
                 <br>
                 <div>
                     github
@@ -2321,13 +2358,13 @@ class Settings {
                 </div>
             </div>
             <div class="ac-game-settings-quick-login-gitee">
-                <img width="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/gitee.png" >
+                <img width="30" src="https://cdn.acwing.com/media/article/image/2022/03/27/82975_fe4ed5d3ad-gitee.png" >
                 <div>
                     gitee
                 </div>
             </div>
             <div class="ac-game-settings-quick-login-github">
-                <img width="30" src="https://gitee.com/liuyutaocode/tao-blog-image/raw/master/img/github.png" >
+                <img width="30" src="https://cdn.acwing.com/media/article/image/2022/03/27/82975_055d5bf1ad-github.png" >
                 <div>
                     github
                 </div>
@@ -2558,7 +2595,7 @@ class Settings {
     add_listening_events_register() {
         let outer = this;
         this.$register_login.click(function () {
-            console.log('666')
+            // console.log('666')
             outer.open_login();
         });
         this.$register_submit.click(function () {

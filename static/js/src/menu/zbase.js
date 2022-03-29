@@ -23,12 +23,11 @@ class AcGameMenu {
         `);
         this.$menu.hide();
         this.root.$ac_game.append(this.$menu);
-        this.menu_top = new MenuTop(this);
         this.$single_mode = this.$menu.find('.ac-game-menu-field-item-single-mode');
         this.$multi_mode = this.$menu.find('.ac-game-menu-field-item-multi-mode');
         this.$settings = this.$menu.find('.ac-game-menu-field-item-settings');
         this.$hexgl = this.$menu.find('.ac-game-menu-field-item-hexgl');
-
+        this.menu_top = new MenuTop(this);
         this.global_chat_field = new GlobalChatField(this);
         this.gcs = new GlobalChatSocket(this);
         let outer = this;
