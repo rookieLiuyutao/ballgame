@@ -239,7 +239,7 @@ class MenuTop {
                 if (resp.result === "success") {
                     outer.$word.append($(`<span>
                         <img src="${resp.photo}" height="40vh">
-                        ${resp.username}欢迎光临。游戏说明：右键移动，q键发射；匹配模式，3人自动匹配一局
+                        ${resp.username}欢迎光临。游戏说明：右键移动，q键发射；多人模式，3人自动匹配一局
                     </span>`))
                 }
             }
@@ -911,10 +911,10 @@ class MiniMap extends AcGameObject {
 class NoticeBoard extends AcGameObject {
     constructor(playground) {
         super();
-
         this.playground = playground;
         this.ctx = this.playground.game_map.ctx;
-        this.text = "已就绪：0人";
+        this.text = "匹配中。。。";
+        this.hp = "100/100"
     }
 
     start() {
@@ -924,15 +924,31 @@ class NoticeBoard extends AcGameObject {
         this.text = text;
     }
 
+    update_hp(hp, max_hp) {
+        this.hp ="血量：" +hp + "/" + max_hp;
+    }
+
     update() {
         this.render();
     }
 
     render() {
+        this.render_status()
+        if (this.text!=="匹配中。。。") this.rander_boold()
+    }
+
+    render_status() {
         this.ctx.font = "20px serif";
-        this.ctx.fillStyle = "white";
+        this.ctx.fillStyle = "black";
         this.ctx.textAlign = "center";
         this.ctx.fillText(this.text, this.playground.width / 2, 20);
+    }
+
+    rander_boold() {
+        this.ctx.font = "20px serif";
+        this.ctx.fillStyle = "red";
+        this.ctx.textAlign = "center";
+        this.ctx.fillText(this.hp, (this.playground.width / 3) * 2, 20);
     }
 }
 class ClickParticle extends AcGameObject {
@@ -1145,11 +1161,9 @@ class Particle extends AcGameObject {
 
     check_room_status() {
         this.playground.player_count++;
-        this.playground.notice_board.write("已就绪：" + this.playground.player_count + "人");
-
         if (this.playground.player_count >= 3) {
             this.playground.state = "fighting";
-            this.playground.notice_board.write("Fighting");
+            this.playground.notice_board.write("激动人心的战斗开始了");
         }
 
     }
@@ -1274,15 +1288,14 @@ class Particle extends AcGameObject {
     }
 
 
-
     /**
      * 在每一帧渲染画面
      */
     render() {
         //渲染用户头像
-        if (this.character !== "robot"&&this.status!=="die") {
+        if (this.character !== "robot" && this.status !== "die") {
             this.render_photo();
-        } else if (this.character === "robot"&&this.status!=="die"){
+        } else if (this.character === "robot" && this.status !== "die") {
             this.render_radius();
         }
         if (this.character === "me" && this.playground.state === "fighting") {
@@ -1525,6 +1538,12 @@ class Particle extends AcGameObject {
         //实现被攻击后的粒子效果
         this.is_attacked_particle();
         //受到攻击的玩家，移速变快，体积变小
+        if (this.character === "me") {
+
+            this.hp -= 20;
+            this.playground.notice_board.update_hp(this.hp, this.max_hp)
+
+        }
         this.is_attacked_player_change(damage);
         if (this.radius < this.eps) {
             this.is_attacked_after_die();
@@ -1645,7 +1664,9 @@ class Particle extends AcGameObject {
     destroy_player() {
         if (this.character === "me") {
             if (this.playground.state === "fighting") {
-                this.playground.state = "over";
+                this.playground.state = "游戏结束";
+                this.hp = 0
+                this.playground.notice_board.update_hp(0, this.max_hp)
                 this.playground.score_board.lose();
             }
         }
@@ -1670,8 +1691,8 @@ class Particle extends AcGameObject {
 
     update_win() {
         if (this.playground.state === "fighting" && this.character === "me" && this.playground.players.length === 1) {
-            this.playground.state = "over";
-            // this.status = "die";
+            this.playground.state = "游戏结束";
+            this.status = "die";
             this.playground.score_board.win();
         }
 
@@ -1730,6 +1751,7 @@ class ScoreBoard extends AcGameObject {
 
     render() {
         let len = this.playground.height / 2;
+
         if (this.state === "win") {
             this.ctx.drawImage(this.win_img, this.playground.width / 2 - len / 2, this.playground.height / 2 - len / 2, len, len);
         } else if (this.state === "lose") {

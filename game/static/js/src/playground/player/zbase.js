@@ -89,11 +89,9 @@ class Player extends AcGameObject {
 
     check_room_status() {
         this.playground.player_count++;
-        this.playground.notice_board.write("已就绪：" + this.playground.player_count + "人");
-
         if (this.playground.player_count >= 3) {
             this.playground.state = "fighting";
-            this.playground.notice_board.write("Fighting");
+            this.playground.notice_board.write("激动人心的战斗开始了");
         }
 
     }
@@ -218,15 +216,14 @@ class Player extends AcGameObject {
     }
 
 
-
     /**
      * 在每一帧渲染画面
      */
     render() {
         //渲染用户头像
-        if (this.character !== "robot"&&this.status!=="die") {
+        if (this.character !== "robot" && this.status !== "die") {
             this.render_photo();
-        } else if (this.character === "robot"&&this.status!=="die"){
+        } else if (this.character === "robot" && this.status !== "die") {
             this.render_radius();
         }
         if (this.character === "me" && this.playground.state === "fighting") {
@@ -469,6 +466,12 @@ class Player extends AcGameObject {
         //实现被攻击后的粒子效果
         this.is_attacked_particle();
         //受到攻击的玩家，移速变快，体积变小
+        if (this.character === "me") {
+
+            this.hp -= 20;
+            this.playground.notice_board.update_hp(this.hp, this.max_hp)
+
+        }
         this.is_attacked_player_change(damage);
         if (this.radius < this.eps) {
             this.is_attacked_after_die();
@@ -589,7 +592,9 @@ class Player extends AcGameObject {
     destroy_player() {
         if (this.character === "me") {
             if (this.playground.state === "fighting") {
-                this.playground.state = "over";
+                this.playground.state = "游戏结束";
+                this.hp = 0
+                this.playground.notice_board.update_hp(0, this.max_hp)
                 this.playground.score_board.lose();
             }
         }
@@ -614,8 +619,8 @@ class Player extends AcGameObject {
 
     update_win() {
         if (this.playground.state === "fighting" && this.character === "me" && this.playground.players.length === 1) {
-            this.playground.state = "over";
-            // this.status = "die";
+            this.playground.state = "游戏结束";
+            this.status = "die";
             this.playground.score_board.win();
         }
 

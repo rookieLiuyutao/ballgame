@@ -50,6 +50,7 @@ class ScoreBoard extends AcGameObject {
 
     render() {
         let len = this.playground.height / 2;
+
         if (this.state === "win") {
             this.ctx.drawImage(this.win_img, this.playground.width / 2 - len / 2, this.playground.height / 2 - len / 2, len, len);
         } else if (this.state === "lose") {
