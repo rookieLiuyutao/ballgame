@@ -55,7 +55,7 @@ class MenuTop {
                 if (resp.result === "success") {
                     outer.$word.append($(`<span>
                         <img src="${resp.photo}" height="40vh">
-                        ${resp.username}欢迎光临。游戏说明：右键移动，q键发射；多人模式，3人自动匹配一局
+                        ${resp.username}欢迎光临。游戏说明：右键移动，q键发射,F闪现；多人模式，3人自动匹配一局
                     </span>`))
                 }
             }
