@@ -84,3 +84,29 @@ daphne -b 0.0.0.0 -p 5015 acapp.asgi:application
 python3 manage.py runserver 0.0.0.0:端口号
 ```
 
+#### django后台操作redis
+
+1.打开项目的django交互式后台
+
+```
+python3 manage.py shell
+```
+
+
+
+2.导入cache层相关的包
+
+```
+from django.core.cache import cache
+```
+
+
+
+3.操作redis的一些命令
+
+|                       |                               |                                |
+| :-------------------: | :---------------------------: | :----------------------------: |
+| 列出redis中的所有key  |        cache.keys('*')        | cache.keys()中的表达式支持正则 |
+| 向redis中插入一条数据 | cache.set(key,value,passtime) |                                |
+|  查询某个key是否存在  |       cache.has_key('')       |                                |
+

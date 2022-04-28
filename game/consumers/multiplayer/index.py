@@ -19,7 +19,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
     ready_player = {}
 
     async def connect(self):
-        # print("连接成功")
+        print("连接成功")
         await self.accept()
 
     # 处理主机接收到的消息的函数
@@ -80,6 +80,21 @@ class MultiPlayer(AsyncWebsocketConsumer):
 
         # Close!
         transport.close()
+        room_players = cache.get(self.room_name)
+        # print("cache的玩家："+room_players)
+
+        # for p in room_players:
+        #     async_to_sync(channel_layer.group_send)(
+        #         room_name,
+        #         {
+        #             'type': "group_send_event",
+        #             'event': "create_player",
+        #             'uuid': p.uuid,
+        #             'username': p.username,
+        #             'photo': p.photo,
+        #         }
+        #     )
+
 
     async def move_to(self, data):
         await self.channel_layer.group_send(
@@ -95,7 +110,8 @@ class MultiPlayer(AsyncWebsocketConsumer):
 
             }
         )
-        # self.ready_player[data['uuid']] = [data['tx'], data['ty'], self.room_name]
+
+
 
     async def shoot_fireball(self, data):
         await self.channel_layer.group_send(
