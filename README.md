@@ -101,7 +101,6 @@ from django.core.cache import cache
 ```
 
 
-
 3.操作redis的一些命令
 
 |                       |                               |                                |
@@ -109,4 +108,7 @@ from django.core.cache import cache
 | 列出redis中的所有key  |        cache.keys('*')        | cache.keys()中的表达式支持正则 |
 | 向redis中插入一条数据 | cache.set(key,value,passtime) |                                |
 |  查询某个key是否存在  |       cache.has_key('')       |                                |
+|     删除所有数据      |         cache.clear()         |                                |
+
+                     |
 

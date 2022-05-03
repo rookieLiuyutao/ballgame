@@ -15,8 +15,8 @@ class AcGameMenu {
                   <div class="ac-game-menu-field-item ac-game-menu-field-item-settings">
                       退出
                   </div>
-                   <div class="ac-game-menu-field-item ac-game-menu-field-item-hexgl">
-                      HexGL
+                   <div class="ac-game-menu-field-item ac-game-menu-field-item-kof97">
+                      web版拳皇97
                   </div>
               </div>
           </div>
@@ -26,7 +26,7 @@ class AcGameMenu {
         this.$single_mode = this.$menu.find('.ac-game-menu-field-item-single-mode');
         this.$multi_mode = this.$menu.find('.ac-game-menu-field-item-multi-mode');
         this.$settings = this.$menu.find('.ac-game-menu-field-item-settings');
-        this.$hexgl = this.$menu.find('.ac-game-menu-field-item-hexgl');
+        this.$hexgl = this.$menu.find('.ac-game-menu-field-item-kof97');
         this.menu_top = new MenuTop(this);
         this.global_chat_field = new GlobalChatField(this);
         this.gcs = new GlobalChatSocket(this);
@@ -61,7 +61,7 @@ class AcGameMenu {
             outer.root.settings.logout_on_remote();
         });
         this.$hexgl.click(function () {
-            window.location.href = "https://game.liuyutao666.top/static/HexGL/index.html";
+            window.location.href = "https://game.liuyutao666.top/kof97/templates/index.html";
         });
 
     }

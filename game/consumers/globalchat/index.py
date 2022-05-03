@@ -31,7 +31,8 @@ class GlobalChat(AsyncWebsocketConsumer):
             global_chat_list = global_chat_list[len(global_chat_list) - 20:len(global_chat_list)]
             cache.set('globalChatWindow', global_chat_list, None)
         await self.channel_layer.group_add('globalChatWindow', self.channel_name)
-        # await self.channel_layer.group_add(self.standard_str(username), self.channel_name)
+        #将前端用户channel加入
+        await self.channel_layer.group_add(self.standard_str(username), self.channel_name)
         if event == 'init':
             await self.init(username)
         elif event == 'send_message':
